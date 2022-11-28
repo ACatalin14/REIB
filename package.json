@@ -25,15 +25,10 @@
         "cheerio": "^1.0.0-rc.12",
         "delay": "^5.0.0",
         "dotenv": "^16.0.3",
-        "https-proxy-agent": "^5.0.1",
         "jimp": "^0.16.2",
         "mongodb": "^4.11.0",
-        "node-abort-controller": "^3.0.1",
         "puppeteer": "^19.2.2",
-        "puppeteer-core": "^19.2.2",
-        "puppeteer-page-proxy": "^1.3.0",
-        "request": "^2.88.2",
-        "request-promise": "^4.2.6"
+        "puppeteer-core": "^19.2.2"
     },
     "devDependencies": {
         "prettier": "^2.7.1"
