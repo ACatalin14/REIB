@@ -27,10 +27,12 @@
         "delay": "^5.0.0",
         "dotenv": "^16.0.3",
         "jimp": "^0.16.2",
-        "mongodb": "^4.11.0"
+        "mongodb": "^4.11.0",
+        "puppeteer-core": "^19.3.0"
     },
     "devDependencies": {
-        "prettier": "^2.7.1"
+        "prettier": "^2.7.1",
+        "puppeteer": "^19.3.0"
     },
     "prettier": {
         "singleQuote": true,
