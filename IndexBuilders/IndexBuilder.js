@@ -1,5 +1,5 @@
-import {consoleLog} from '../Helpers/Utils.js';
-import {load} from 'cheerio';
+import { consoleLog } from '../Helpers/Utils.js';
+import { load } from 'cheerio';
 
 export class IndexBuilder {
     constructor(logsSource, dbCollection, dataExtractor, smartRequester, imageHasher) {
@@ -55,7 +55,7 @@ export class IndexBuilder {
 
         delete listingData.imageUrls;
 
-        consoleLog('Listing fetched successfully. Waiting...')
+        consoleLog('Listing fetched successfully. Waiting...');
 
         return listingData;
     }

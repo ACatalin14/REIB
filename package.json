@@ -3,9 +3,12 @@
     "version": "1.0.0",
     "type": "module",
     "description": "Real Estate Indexer for Bucharest (REIB) is a web scraper that employs transactions and duplicates detection to build a realistic index of listings based on data collected from Romanian web platforms",
-    "main": "index.js",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "start": "node index.js",
+        "initIndex": "node Scripts/initIndex.js",
+        "syncIndex": "node Scripts/syncIndex.js",
+        "testImagesSimilarities": "node Tests/checkImagesSimilarities.js",
+        "testListingsSimilarities": "node Tests/checkListingsSimilarities.js"
     },
     "repository": {
         "type": "git",
