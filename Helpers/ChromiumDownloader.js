@@ -6,12 +6,12 @@ import ProxyAgent from 'proxy-agent';
 import got from 'got';
 import mkdirp from 'mkdirp';
 import cpr from 'cpr';
-import pipe from 'promisepipe'
-import extract from 'extract-zip'
+import pipe from 'promisepipe';
+import extract from 'extract-zip';
 
-const stat = promisify(fs.stat)
-const mkdir = promisify(fs.mkdir)
-const unlink = promisify(fs.unlink)
+const stat = promisify(fs.stat);
+const mkdir = promisify(fs.mkdir);
+const unlink = promisify(fs.unlink);
 
 export class ChromiumDownloader {
     constructor() {
@@ -41,7 +41,7 @@ export class ChromiumDownloader {
 
     async copyCacheToModule() {
         mkdirp.sync(this.getFolderPath(this.installPath));
-        await cpr(this.getFolderPath(this.cacheRoot), this.getFolderPath(this.installPath));
+        await cpr(this.getFolderPath(this.cacheRoot), this.getFolderPath(this.installPath), { overwrite: true });
     }
 
     async download() {
