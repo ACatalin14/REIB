@@ -23,10 +23,10 @@ export class ChromiumDownloader {
         this.folderPath = '/tmp/';
     }
 
-    get(url) {
+    getArchive(url) {
         const proxy = getProxyForUrl(url);
         const agent = proxy ? new ProxyAgent(proxy) : undefined;
-        const result = got.stream(url, { agent });
+        const result = got.stream(url);
 
         return result;
     }
@@ -80,7 +80,7 @@ export class ChromiumDownloader {
         const zipPath = `${folderPath}.zip`;
 
         consoleLog(`Downloading Chromium r499413...`);
-        await pipe(await this.get(this.downloadUrl), fs.createWriteStream(zipPath));
+        await pipe(await this.getArchive(this.downloadUrl), fs.createWriteStream(zipPath));
 
         consoleLog('extract');
         await extractSync(zipPath, { dir: folderPath });
