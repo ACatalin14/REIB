@@ -33,6 +33,7 @@
         "jimp": "0.16.2",
         "mkdirp": "1.0.4",
         "mongodb": "4.11.0",
+        "node-apt-get": "0.1.1",
         "node-sys": "1.2.4",
         "promisepipe": "3.0.0",
         "puppeteer-core": "19.3.0",

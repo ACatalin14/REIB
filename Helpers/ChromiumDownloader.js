@@ -6,7 +6,7 @@ import mkdirp from 'mkdirp';
 import cpr from 'cpr';
 import pipe from 'promisepipe';
 import extract from 'extract-zip';
-import { packager, installer } from 'node-sys';
+import apt from 'node-apt-get';
 
 const stat = promisify(fs.stat);
 const mkdir = promisify(fs.mkdir);
@@ -45,26 +45,26 @@ export class ChromiumDownloader {
             return '/usr/bin/chromium-browser';
         } catch (_) {}
 
-        const sys = packager();
-        console.log('Do system OS require sudo? ' + sys.sudo);
-        console.log('The system OS install command: ' + sys.command);
-        console.log('To fully install a `pandoc` package run: ' + sys.installer + ' pandoc');
-
         consoleLog('Need to install chromium package.');
 
-        try {
-            await installer('chromium-browser', (object) => {
-                console.log(object.output);
-            });
-        } catch (error) {
+        let isDone = false;
+
+        apt.install('chromium-browser').on('close', function (code) {
+            if (!code) {
+                consoleLog('Installed package');
+                isDone = true;
+                return;
+            }
+
             consoleLog('Error while installing ubuntu package');
-            consoleLog(error);
-            throw error;
-        }
+            isDone = true;
+        });
+
+        while (!isDone) {}
 
         try {
             await stat('/usr/bin/chromium-browser');
-            consoleLog('Done installing package')
+            consoleLog('Done installing package');
             return '/usr/bin/chromium-browser';
         } catch (_) {
             consoleLog('Cannot find path where package is installed');
