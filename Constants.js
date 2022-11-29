@@ -1,3 +1,4 @@
+// TODO: remove "/ 600000"
 export const START_DELAY = parseInt((Math.random() * 10 * 60 * 1000) / 600000); // 10 minutes
 export const RESTING_DELAY_MIN = 1000; // 1 seconds
 export const RESTING_DELAY_MAX = 5000; // 5 seconds
@@ -5,9 +6,9 @@ export const RESTING_DELAY_MAX = 5000; // 5 seconds
 // Number of similar images between two listings so they can be considered similar listings
 export const SIMILARITY_IMAGES_COUNT_THRESHOLD = 3;
 // Percentage threshold between two image hashes so they can be considered similar images
-export const SIMILARITY_HASH_THRESHOLD = 0.90;
+export const SIMILARITY_HASH_THRESHOLD = 0.9;
 
-export const DEFAULT_HASH_SIZE = 16;  // Use powers of 2
+export const DEFAULT_HASH_SIZE = 16; // Use powers of 2
 
 export const LOGS_SOURCE_IMOBILIARE_RO = 'imobiliare.ro';
 
@@ -20,6 +21,7 @@ export const DB_COLLECTION_ANUNTUL = 'anuntulRoListings';
 export const URL_SSL_PROXIES = 'https://sslproxies.org/';
 export const URL_XML_IMOBILIARE_LISTINGS_BUCHAREST =
     'https://www.imobiliare.ro/sitemap-listings-apartments-for-sale-bucuresti-ilfov-ro.xml';
+export const URL_XML_ANUNTUL_LISTINGS_BUCHAREST_1 = 'https://www.anuntul.ro/sitemap-category_3.xml';
 
 export const HTTP_STATUS_CODE_OK = 200;
 

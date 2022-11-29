@@ -7,13 +7,33 @@ import {
     LOGS_SOURCE_IMOBILIARE_RO,
     REFERER_IMOBILIARE_RO,
     REFERRERS_IMOBILIARE_RO,
+    START_DELAY,
 } from '../Constants.js';
 import { ImageHasher } from '../Helpers/ImageHasher.js';
 import { DbCollection } from '../DbLayer/DbCollection.js';
+import delay from 'delay';
+import { DbClient } from '../DbLayer/DbClient.js';
 
 export class MainIndexSynchronizer {
     constructor(dbClient) {
         this.dbClient = dbClient;
+    }
+
+    async sync() {
+        // Start with a random delay (at most 10 mins)
+        await delay(START_DELAY);
+
+        this.dbClient = new DbClient();
+        await this.dbClient.connect();
+
+        // TODO: Make a test request to MongoDB to check it is up and running (not down for maintenance etc.)
+
+        await this.syncIndexImobiliareRo();
+        // await this.syncIndexOlxRo();
+        // await this.syncIndexStoriaRo();
+        // await this.syncIndexAnuntulRo();
+
+        await this.dbClient.disconnect();
     }
 
     async syncIndexImobiliareRo() {

@@ -1,21 +1,15 @@
 import { consoleLog } from './Helpers/Utils.js';
-import { ChromiumDownloader } from './Helpers/ChromiumDownloader.js';
+import express from 'express';
+import { router } from './router.js';
+import { config } from 'dotenv';
+
+config(); // Use Environment Variables
 
 consoleLog('REIB has been deployed!');
 
-(async () => {
-    consoleLog('Ready to download Chromium.');
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-    const chromiumDownloader = new ChromiumDownloader();
+app.use('/api', router);
 
-    let path;
-
-    try {
-        path = await chromiumDownloader.download();
-        consoleLog(`Downloaded Chromium to ${path}`);
-    } catch (error) {
-        consoleLog(`Error while downloading Chromium.`);
-        consoleLog(error);
-    }
-
-})();
+app.listen(PORT, () => consoleLog(`REIB Server is listening on port ${PORT}.`));

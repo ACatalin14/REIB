@@ -9,10 +9,27 @@ import {
 } from '../Constants.js';
 import { ImageHasher } from '../Helpers/ImageHasher.js';
 import { DbCollection } from '../DbLayer/DbCollection.js';
+import { DbClient } from '../DbLayer/DbClient.js';
 
 export class MainIndexInitializer {
-    constructor(dbClient) {
-        this.dbClient = dbClient;
+    constructor() {
+        this.dbClient = null;
+    }
+
+    async init() {
+        this.dbClient = new DbClient();
+        await this.dbClient.connect();
+
+        // TODO: Make a dummy query to MongoDB to test it is up and running (not down for maintenance etc.)
+
+        await Promise.allSettled([
+            this.initializeIndexImobiliareRo(),
+            // this.initializeOlxRoIndex(),
+            // this.initializeStoriaRoIndex(),
+            // this.initializeAnuntulRoIndex(),
+        ]);
+
+        await this.dbClient.disconnect();
     }
 
     async initializeIndexImobiliareRo() {
