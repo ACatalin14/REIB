@@ -45,7 +45,7 @@ export class IndexBuilder {
         });
 
         // TODO: Change back to full array: return xmlListings;
-        return xmlListings.slice(0, 500);
+        return [xmlListings[1834]];
     }
 
     async fetchListingDataFromPage(listingShortData, browserPage) {
