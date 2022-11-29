@@ -39,37 +39,37 @@ export class ChromiumDownloader {
     }
 
     async download() {
-        try {
-            await stat('/usr/bin/chromium-browser');
-            consoleLog('Path /usr/bin/chromium-browser exists already, so chromium package already installed.');
-            return '/usr/bin/chromium-browser';
-        } catch (_) {}
-
-        consoleLog('Need to install chromium package.');
-
-        let isDone = false;
-
-        apt.install('chromium-browser').on('close', function (code) {
-            if (!code) {
-                consoleLog('Installed package');
-                isDone = true;
-                return;
-            }
-
-            consoleLog('Error while installing ubuntu package');
-            isDone = true;
-        });
-
-        while (!isDone) {}
-
-        try {
-            await stat('/usr/bin/chromium-browser');
-            consoleLog('Done installing package');
-            return '/usr/bin/chromium-browser';
-        } catch (_) {
-            consoleLog('Cannot find path where package is installed');
-            throw _;
-        }
+        // try {
+        //     await stat('/usr/bin/chromium-browser');
+        //     consoleLog('Path /usr/bin/chromium-browser exists already, so chromium package already installed.');
+        //     return '/usr/bin/chromium-browser';
+        // } catch (_) {}
+        //
+        // consoleLog('Need to install chromium package.');
+        //
+        // let isDone = false;
+        //
+        // apt.install('chromium-browser').on('close', function (code) {
+        //     if (!code) {
+        //         consoleLog('Installed package');
+        //         isDone = true;
+        //         return;
+        //     }
+        //
+        //     consoleLog('Error while installing ubuntu package');
+        //     isDone = true;
+        // });
+        //
+        // while (!isDone) {}
+        //
+        // try {
+        //     await stat('/usr/bin/chromium-browser');
+        //     consoleLog('Done installing package');
+        //     return '/usr/bin/chromium-browser';
+        // } catch (_) {
+        //     consoleLog('Cannot find path where package is installed');
+        //     throw _;
+        // }
 
         ////////////////////////////////////////////// Download chrome from other sources ////////////////////////////
 
