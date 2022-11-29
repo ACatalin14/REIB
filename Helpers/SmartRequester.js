@@ -46,6 +46,7 @@ export class SmartRequester {
         return await puppeteer.launch({
             headless: true,
             executablePath: '/tmp/.local-chromium/chromium-linux-499413/chrome-linux/chrome',
+            args: ['--no-sandbox', '--disable-setuid-sandbox'],
         });
     }
 
