@@ -11,7 +11,6 @@ import extract from 'extract-zip'
 
 const stat = promisify(fs.stat)
 const mkdir = promisify(fs.mkdir)
-const extractSync = promisify(extract)
 const unlink = promisify(fs.unlink)
 
 export class ChromiumDownloader {
@@ -83,7 +82,7 @@ export class ChromiumDownloader {
         await pipe(await this.getArchive(this.downloadUrl), fs.createWriteStream(zipPath));
 
         consoleLog('extract');
-        await extractSync(zipPath, { dir: folderPath });
+        await extract(zipPath, { dir: folderPath });
 
         consoleLog('clean up');
         await unlink(zipPath);
