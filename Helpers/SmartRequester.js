@@ -3,7 +3,7 @@ import HttpsProxyAgent from 'https-proxy-agent';
 import { RESTING_DELAY_MAX, RESTING_DELAY_MIN, USER_AGENTS } from '../Constants.js';
 import { AbortController } from 'node-abort-controller';
 import Jimp from 'jimp';
-import playwright from 'playwright-chromium';
+import puppeteer from 'puppeteer-core';
 import { consoleLog } from './Utils.js';
 
 export class SmartRequester {
@@ -51,7 +51,7 @@ export class SmartRequester {
     }
 
     async getHeadlessBrowser() {
-        return await playwright.chromium.launch();
+        return await puppeteer.launch({ headless: true });
     }
 
     async getPageFromUrl(browserPage, url) {
