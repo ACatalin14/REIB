@@ -1,8 +1,6 @@
 import fs from 'fs';
 import { promisify } from 'util';
 import { consoleLog } from './Utils.js';
-import { getProxyForUrl } from 'proxy-from-env';
-import ProxyAgent from 'proxy-agent';
 import got from 'got';
 import mkdirp from 'mkdirp';
 import cpr from 'cpr';
@@ -19,15 +17,10 @@ export class ChromiumDownloader {
             'https://storage.googleapis.com/chromium-browser-snapshots/Linux_x64/499413/chrome-linux.zip';
         this.installPath = '/tmp/.local-chromium';
         this.cacheRoot = '/tmp/.chromium-cache';
-        this.folderPath = '/tmp/';
     }
 
     getArchive(url) {
-        const proxy = getProxyForUrl(url);
-        const agent = proxy ? new ProxyAgent(proxy) : undefined;
-        const result = got.stream(url);
-
-        return result;
+        return got.stream(url);
     }
 
     getFolderPath(root) {
