@@ -1,5 +1,5 @@
 import { consoleLog } from './Helpers/Utils.js';
-import { ChromiumDownloader } from './ChromiumDownloader.js';
+import { ChromiumDownloader } from './Helpers/ChromiumDownloader.js';
 
 consoleLog('REIB has been deployed!');
 

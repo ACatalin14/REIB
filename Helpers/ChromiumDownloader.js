@@ -1,6 +1,6 @@
 import fs from 'fs';
 import { promisify } from 'util';
-import { consoleLog } from './Helpers/Utils';
+import { consoleLog } from './Utils.js';
 import { getProxyForUrl } from 'proxy-from-env';
 import ProxyAgent from 'proxy-agent';
 import got from 'got';
@@ -11,7 +11,7 @@ import extract from 'extract-zip'
 
 const stat = promisify(fs.stat)
 const mkdir = promisify(fs.mkdir)
-const extract = promisify(extract)
+const extractSync = promisify(extract)
 const unlink = promisify(fs.unlink)
 
 export class ChromiumDownloader {
@@ -83,7 +83,7 @@ export class ChromiumDownloader {
         await pipe(await this.get(this.downloadUrl), fs.createWriteStream(zipPath));
 
         consoleLog('extract');
-        await extract(zipPath, { dir: folderPath });
+        await extractSync(zipPath, { dir: folderPath });
 
         consoleLog('clean up');
         await unlink(zipPath);
