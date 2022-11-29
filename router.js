@@ -2,8 +2,8 @@ import express from 'express';
 import { checkListingsFromUrls } from './Tests/ListingsCheckerMethods.js';
 import { MainIndexInitializer } from './IndexInitializers/MainIndexInitializer.js';
 import { MainIndexSynchronizer } from './IndexSynchronizers/MainIndexSynchronizer.js';
-import { consoleLog } from './Helpers/Utils';
-import { ChromiumDownloader } from './Helpers/ChromiumDownloader';
+import { consoleLog } from './Helpers/Utils.js';
+import { ChromiumDownloader } from './Helpers/ChromiumDownloader.js';
 
 const router = express.Router();
 const mainIndexInitializer = new MainIndexInitializer();
