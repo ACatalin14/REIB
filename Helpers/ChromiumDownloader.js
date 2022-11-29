@@ -6,6 +6,7 @@ import mkdirp from 'mkdirp';
 import cpr from 'cpr';
 import pipe from 'promisepipe';
 import extract from 'extract-zip';
+import { packager, installer } from 'node-sys';
 
 const stat = promisify(fs.stat);
 const mkdir = promisify(fs.mkdir);
@@ -38,6 +39,40 @@ export class ChromiumDownloader {
     }
 
     async download() {
+        try {
+            await stat('/usr/bin/chromium-browser');
+            consoleLog('Path /usr/bin/chromium-browser exists already, so chromium package already installed.');
+            return '/usr/bin/chromium-browser';
+        } catch (_) {}
+
+        const sys = packager();
+        console.log('Do system OS require sudo? ' + sys.sudo);
+        console.log('The system OS install command: ' + sys.command);
+        console.log('To fully install a `pandoc` package run: ' + sys.installer + ' pandoc');
+
+        consoleLog('Need to install chromium package.');
+
+        try {
+            await installer('chromium-browser', (object) => {
+                console.log(object.output);
+            });
+        } catch (error) {
+            consoleLog('Error while installing ubuntu package');
+            consoleLog(error);
+            throw error;
+        }
+
+        try {
+            await stat('/usr/bin/chromium-browser');
+            consoleLog('Done installing package')
+            return '/usr/bin/chromium-browser';
+        } catch (_) {
+            consoleLog('Cannot find path where package is installed');
+            throw _;
+        }
+
+        ////////////////////////////////////////////// Download chrome from other sources ////////////////////////////
+
         const moduleExecutablePath = this.getExecutablePath(this.installPath);
 
         consoleLog('module executable path %s', moduleExecutablePath);
