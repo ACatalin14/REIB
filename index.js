@@ -8,7 +8,14 @@ consoleLog('REIB has been deployed!');
 
     const chromiumDownloader = new ChromiumDownloader();
 
-    const path = await chromiumDownloader.download();
+    let path;
 
-    consoleLog(`Downloaded Chromium to ${path}`);
+    try {
+        path = await chromiumDownloader.download();
+        consoleLog(`Downloaded Chromium to ${path}`);
+    } catch (error) {
+        consoleLog(`Error while downloading Chromium.`);
+        consoleLog(error);
+    }
+
 })();
