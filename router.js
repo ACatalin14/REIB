@@ -6,15 +6,25 @@ import { consoleLog } from './Helpers/Utils.js';
 import { ChromiumDownloader } from './Helpers/ChromiumDownloader.js';
 
 const router = express.Router();
-const mainIndexInitializer = new MainIndexInitializer();
-const mainIndexSynchronizer = new MainIndexSynchronizer();
 
 router.post('/test/downloadChromium', downloadChromium);
-router.post('/cron/initIndex', mainIndexInitializer.init);
-router.post('/cron/syncIndex', mainIndexSynchronizer.sync);
+router.post('/cron/initIndex', initIndex);
+router.post('/cron/syncIndex', syncIndex);
 router.post('/cron/checkListingsSimilaritiesFromUrls', checkListingsFromUrls);
 
-async function downloadChromium() {
+async function initIndex(req, res) {
+    const mainIndexInitializer = new MainIndexInitializer();
+    await mainIndexInitializer.init();
+    return res.status(200).json({ success: true });
+}
+
+async function syncIndex(req, res) {
+    const mainIndexSynchronizer = new MainIndexSynchronizer();
+    await mainIndexSynchronizer.sync();
+    return res.status(200).json({ success: true });
+}
+
+async function downloadChromium(req, res) {
     consoleLog('Ready to download Chromium.');
 
     const chromiumDownloader = new ChromiumDownloader();
@@ -24,9 +34,11 @@ async function downloadChromium() {
     try {
         path = await chromiumDownloader.download();
         consoleLog(`Downloaded Chromium to ${path}`);
+        return res.status(200).json({ success: true });
     } catch (error) {
         consoleLog(`Error while downloading Chromium.`);
         consoleLog(error);
+        return res.status(500).json({ error: error.message });
     }
 }
 
