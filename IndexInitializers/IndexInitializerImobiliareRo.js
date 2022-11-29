@@ -9,7 +9,16 @@ export class IndexInitializerImobiliareRo extends IndexInitializer {
 
         await this.dbMarketListings.insertMany(xmlListings);
 
-        let [browser, browserPage] = await this.getNewBrowserAndNewPage();
+        let browser, browserPage;
+
+        try {
+            [browser, browserPage] = await this.getNewBrowserAndNewPage();
+            consoleLog(`[${this.logsSource}] Launched headless browser.`);
+        } catch (error) {
+            consoleLog(`[${this.logsSource}] Cannot launch headless browser.`);
+            consoleLog(error);
+            throw error;
+        }
 
         for (let i = 0; i < xmlListings.length; i++) {
             let listingData;
