@@ -6,7 +6,7 @@ import mkdirp from 'mkdirp';
 import cpr from 'cpr';
 import pipe from 'promisepipe';
 import extract from 'extract-zip';
-import apt from 'node-apt-get';
+import puppeteer, { BrowserFetcher } from 'puppeteer-core';
 
 const stat = promisify(fs.stat);
 const mkdir = promisify(fs.mkdir);
@@ -39,37 +39,16 @@ export class ChromiumDownloader {
     }
 
     async download() {
-        // try {
-        //     await stat('/usr/bin/chromium-browser');
-        //     consoleLog('Path /usr/bin/chromium-browser exists already, so chromium package already installed.');
-        //     return '/usr/bin/chromium-browser';
-        // } catch (_) {}
-        //
-        // consoleLog('Need to install chromium package.');
-        //
-        // let isDone = false;
-        //
-        // apt.install('chromium-browser').on('close', function (code) {
-        //     if (!code) {
-        //         consoleLog('Installed package');
-        //         isDone = true;
-        //         return;
-        //     }
-        //
-        //     consoleLog('Error while installing ubuntu package');
-        //     isDone = true;
-        // });
-        //
-        // while (!isDone) {}
-        //
-        // try {
-        //     await stat('/usr/bin/chromium-browser');
-        //     consoleLog('Done installing package');
-        //     return '/usr/bin/chromium-browser';
-        // } catch (_) {
-        //     consoleLog('Cannot find path where package is installed');
-        //     throw _;
-        // }
+        const browserFetcher = new BrowserFetcher({ path: this.installPath });
+        const revision = await browserFetcher.download('533271');
+
+        const browser = await puppeteer.launch({
+            executablePath: revision.executablePath,
+        });
+
+        await browser.close();
+
+        return;
 
         ////////////////////////////////////////////// Download chrome from other sources ////////////////////////////
 
