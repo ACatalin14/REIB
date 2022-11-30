@@ -6,7 +6,7 @@ import mkdirp from 'mkdirp';
 import cpr from 'cpr';
 import pipe from 'promisepipe';
 import extract from 'extract-zip';
-import puppeteer, { BrowserFetcher } from 'puppeteer-core';
+import puppeteer, { BrowserFetcher } from 'puppeteer';
 
 const stat = promisify(fs.stat);
 const mkdir = promisify(fs.mkdir);

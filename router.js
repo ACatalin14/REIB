@@ -7,10 +7,15 @@ import { ChromiumDownloader } from './Helpers/ChromiumDownloader.js';
 
 const router = express.Router();
 
+router.get('/health/check', healthCheck);
 router.post('/test/downloadChromium', downloadChromium);
 router.post('/cron/initIndex', initIndex);
 router.post('/cron/syncIndex', syncIndex);
 router.post('/cron/checkListingsSimilaritiesFromUrls', checkListingsFromUrls);
+
+async function healthCheck(req, res) {
+    return res.status(200).json({ success: true });
+}
 
 async function initIndex(req, res) {
     const mainIndexInitializer = new MainIndexInitializer();

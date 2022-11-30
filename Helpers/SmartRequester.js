@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { RESTING_DELAY_MAX, RESTING_DELAY_MIN, USER_AGENTS } from '../Constants.js';
 import Jimp from 'jimp';
-import puppeteer from 'puppeteer-core';
+import puppeteer from 'puppeteer';
 import { consoleLog } from './Utils.js';
 
 export class SmartRequester {
@@ -43,11 +43,7 @@ export class SmartRequester {
     }
 
     async getHeadlessBrowser() {
-        return await puppeteer.launch({
-            headless: true,
-            executablePath: '/tmp/.local-chromium/chromium-linux-499413/chrome-linux/chrome',
-            args: ['--no-sandbox', '--disable-setuid-sandbox'],
-        });
+        return await puppeteer.launch({ args: ['--no-sandbox'] });
     }
 
     async getPageFromUrl(browserPage, url) {
