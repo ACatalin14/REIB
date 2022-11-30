@@ -107,9 +107,9 @@ export class DataExtractorImobiliareRo extends DataExtractor {
         await browserPage.click(
             '#galerie_detalii > div.swiper.main_slider > div.swiper-wrapper > div > a > img.front_image'
         );
-        const iframeElementHandle = await browserPage.waitForSelector('#modal-galerie', { timeout: 30000 });
+        const iframeElementHandle = await browserPage.waitForSelector('#modal-galerie', { timeout: 120000 });
         const frame = await iframeElementHandle.contentFrame();
-        await frame.waitForSelector('#slider_imagini > div.swipe-wrap > div', { timeout: 30000 });
+        await frame.waitForSelector('#slider_imagini > div.swipe-wrap > div', { timeout: 120000 });
         const html = await frame.content();
 
         const $ = load(html);

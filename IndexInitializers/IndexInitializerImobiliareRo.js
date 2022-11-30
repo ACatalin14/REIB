@@ -7,7 +7,9 @@ export class IndexInitializerImobiliareRo extends IndexInitializer {
     async start() {
         const xmlListings = await this.fetchListingsFromXml(URL_XML_IMOBILIARE_LISTINGS_BUCHAREST);
 
+        consoleLog('Inserting listings short data to database...')
         await this.dbMarketListings.insertMany(xmlListings);
+        consoleLog('Inserted to database.')
 
         let browser, browserPage;
 
