@@ -36,7 +36,7 @@ export class IndexInitializerImobiliareRo extends IndexInitializer {
             }
 
             await this.dbMarketListings.updateOne({ id: listingData.id }, { $set: listingData });
-            consoleLog(`[${this.source}] Fetched and saved listing successfully. Waiting for the next request...`);
+            consoleLog(`[${this.source}] Fetched and saved listing successfully. Waiting...`);
             await delay(this.smartRequester.getRandomRestingDelay());
         }
 
