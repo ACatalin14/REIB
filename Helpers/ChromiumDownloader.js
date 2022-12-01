@@ -38,19 +38,6 @@ export class ChromiumDownloader {
     }
 
     async download() {
-        // const browserFetcher = new BrowserFetcher({ path: this.installPath });
-        // const revision = await browserFetcher.download('533271');
-        //
-        // const browser = await puppeteer.launch({
-        //     executablePath: revision.executablePath,
-        // });
-        //
-        // await browser.close();
-        //
-        // return;
-
-        ////////////////////////////////////////////// Download chrome from other sources ////////////////////////////
-
         const moduleExecutablePath = this.getExecutablePath(this.installPath);
 
         consoleLog('module executable path %s', moduleExecutablePath);

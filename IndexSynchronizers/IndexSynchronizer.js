@@ -3,8 +3,8 @@ import { consoleLog, mapObjectsToValueOfKey } from '../Helpers/Utils.js';
 import delay from 'delay';
 
 export class IndexSynchronizer extends IndexBuilder {
-    constructor(logsSource, dbCollection, dataExtractor, smartRequester, imageHasher, dbClosedListings) {
-        super(logsSource, dbCollection, dataExtractor, smartRequester, imageHasher);
+    constructor(source, dbCollection, dataExtractor, smartRequester, imageHasher, dbClosedListings) {
+        super(source, dbCollection, dataExtractor, smartRequester, imageHasher);
         this.dbClosedListings = dbClosedListings;
         this.dbClosedListingsRecords = [];
     }
@@ -29,11 +29,13 @@ export class IndexSynchronizer extends IndexBuilder {
     async syncClosedListings(deletedListingsIds, deletedListings) {
         let listingsToBeClosed = [];
 
+        consoleLog(`[${this.source}] Synchronizing closed listings...`);
+
         for (let i = 0; i < deletedListings.length; i++) {
             const similarClosedListing = await this.fetchSimilarClosedListing(deletedListings[i]);
 
             if (!similarClosedListing) {
-                const closedListing = { ...deletedListings[i], closedDate: new Date() };
+                const closedListing = { ...deletedListings[i], closedDate: new Date(), source: this.source };
                 listingsToBeClosed.push(closedListing);
             } else {
                 await this.handleDeletedListingHavingSimilarClosedListing(deletedListings[i], similarClosedListing);
@@ -48,8 +50,6 @@ export class IndexSynchronizer extends IndexBuilder {
         }
 
         await Promise.all(dbOperations);
-
-        consoleLog(`[${this.logsSource}] Synchronized closed listings.`);
     }
 
     async fetchSimilarClosedListing(listing) {
@@ -89,12 +89,15 @@ export class IndexSynchronizer extends IndexBuilder {
         );
 
         originalListing.closedDate = new Date();
+        originalListing.source = this.source;
         this.dbClosedListingsRecords[indexToUpdate] = originalListing;
         await this.dbClosedListings.updateOne({ id: similarClosedListing.id }, { $set: originalListing });
     }
 
     async syncCurrentMarketListingsFromXml(xmlListings) {
         let listingsToBeAdded = [];
+
+        consoleLog(`[${this.source}] Synchronizing current market listings...`);
 
         let [browser, browserPage] = await this.getNewBrowserAndNewPage();
 
@@ -117,7 +120,6 @@ export class IndexSynchronizer extends IndexBuilder {
                 await browser.close();
                 [browser, browserPage] = await this.getNewBrowserAndNewPage();
             }
-
         }
 
         await browser.close();
@@ -126,17 +128,17 @@ export class IndexSynchronizer extends IndexBuilder {
             await this.dbMarketListings.insertMany(listingsToBeAdded);
         }
 
-        consoleLog(`[${this.logsSource}] Synchronized current market listings.`);
+        consoleLog(`[${this.source}] Synchronized current market listings.`);
     }
 
     async createMarketListing(listingShortData, browserPage, newMarketListings) {
         let newListingData;
 
         try {
-            consoleLog('Creating new listing...');
+            consoleLog(`[${this.source}] Fetching to create listing from: ${listingShortData.id}`);
             newListingData = await this.fetchListingDataFromPage(listingShortData, browserPage);
         } catch (error) {
-            consoleLog(`[${this.logsSource}] Cannot fetch new listing data from: ${listingShortData.id}`);
+            consoleLog(`[${this.source}] Cannot fetch new listing data from: ${listingShortData.id}`);
             throw error;
         }
 
@@ -147,18 +149,16 @@ export class IndexSynchronizer extends IndexBuilder {
         let listingData;
 
         try {
-            consoleLog('Updating listing...');
+            consoleLog(`[${this.source}] Fetching to update listing from: ${listingShortData.id}`);
             listingData = await this.fetchListingDataFromPage(listingShortData, browserPage);
         } catch (error) {
-            consoleLog(`[${this.logsSource}] Cannot fetch updated listing data from: ${listingShortData.id}`);
+            consoleLog(`[${this.source}] Cannot fetch updated listing data from: ${listingShortData.id}`);
             throw error;
         }
 
         await this.dbMarketListings.updateOne({ id: listingData.id }, { $set: listingData });
     }
 
-    // TODO: Discuss whether this approach is ok: original listing is the cheaper one by price,
-    //       or the one with higher surface, or more images
     getOriginalListing(listing1, listing2) {
         // Mainly look at the listings' prices, and select the cheaper one (this is what the buyers look into the most)
         if (listing1.price < listing2.price) {

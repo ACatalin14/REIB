@@ -3,13 +3,14 @@ import { DataExtractorImobiliareRo } from '../DataExtractors/DataExtractorImobil
 import { SmartRequester } from '../Helpers/SmartRequester.js';
 import {
     DB_COLLECTION_IMOBILIARE,
-    LOGS_SOURCE_IMOBILIARE_RO,
+    SOURCE_IMOBILIARE_RO,
     REFERER_IMOBILIARE_RO,
     REFERRERS_IMOBILIARE_RO,
 } from '../Constants.js';
 import { ImageHasher } from '../Helpers/ImageHasher.js';
 import { DbCollection } from '../DbLayer/DbCollection.js';
 import { DbClient } from '../DbLayer/DbClient.js';
+import { consoleLog } from '../Helpers/Utils.js';
 
 export class MainIndexInitializer {
     constructor() {
@@ -18,9 +19,14 @@ export class MainIndexInitializer {
 
     async init() {
         this.dbClient = new DbClient();
-        await this.dbClient.connect();
 
-        // TODO: Make a dummy query to MongoDB to test it is up and running (not down for maintenance etc.)
+        try {
+            await this.dbClient.connect();
+        } catch (error) {
+            consoleLog('[reib] Cannot connect to Mongo DB.');
+            consoleLog(error);
+            return;
+        }
 
         await Promise.allSettled([
             this.initializeIndexImobiliareRo(),
@@ -41,7 +47,7 @@ export class MainIndexInitializer {
         const imageHasher = new ImageHasher(smartRequester);
 
         const initializer = new IndexInitializerImobiliareRo(
-            LOGS_SOURCE_IMOBILIARE_RO,
+            SOURCE_IMOBILIARE_RO,
             dbCollection,
             dataExtractor,
             smartRequester,

@@ -1,6 +1,5 @@
 import { Binary } from 'mongodb';
 import { DEFAULT_HASH_SIZE, SIMILARITY_HASH_THRESHOLD, SIMILARITY_IMAGES_COUNT_THRESHOLD } from '../Constants.js';
-import { consoleLog } from './Utils.js';
 
 export class ImageHasher {
     constructor(smartRequester) {
@@ -13,7 +12,7 @@ export class ImageHasher {
 
         const reducedImage = image.greyscale().resize(columnsCount, rowsCount);
 
-        const hash = Buffer.allocUnsafe(hashSize * hashSize / 8);
+        const hash = Buffer.allocUnsafe((hashSize * hashSize) / 8);
 
         let currentByte = 0;
         let currentBitsCount = 0;
@@ -67,24 +66,12 @@ export class ImageHasher {
     async fetchBinHashesFromUrls(urls) {
         let promises = [];
 
-        // TODO: remove
-        consoleLog(`Fetching images from ${urls.length} urls...`);
-
         for (let i = 0; i < urls.length; i++) {
             promises.push(this.smartRequester.getImagePromise(urls[i]));
         }
 
         const results = await Promise.allSettled(promises);
         const images = results.filter((result) => result.status === 'fulfilled').map((result) => result.value);
-
-        // TODO: remove
-        consoleLog('Fetched images successfully');
-
-        // TODO: remove
-        // return images.map((image) => {
-        //     const stringHash = image.hash(64);
-        //     return Binary(Buffer.from(stringHash, 'base64'));
-        // });
 
         return images.map((image) => this.dHash(image));
     }
@@ -119,12 +106,6 @@ export class ImageHasher {
     checkHashListsUsingSimilarityMatrix(similarityMatrix) {
         // Check that a list contains (in similarity) at least SIMILARITY_IMAGES_COUNT_THRESHOLD (3) images
         // included in the other list
-        // TODO: Discuss whether this approach is ok: similarity when more than 3 images detected
-
-        // TODO: Other strategy: check that at least half of images in list1 appear in half of list2? Check pair:
-        //  https://www.imobiliare.ro/vanzare-apartamente/bucuresti/pipera/garsoniera-de-vanzare-X17L100MU
-        //  https://www.imobiliare.ro/vanzare-apartamente/bucuresti/pipera/garsoniera-de-vanzare-X17L100SV
-
         let similarHashesInBiggerList = [];
 
         for (let i = 0; i < similarityMatrix.length; i++) {
@@ -152,20 +133,8 @@ export class ImageHasher {
         if (smallerListLength === 2) {
             // The smaller listing contains exactly 2 images.
             // The listings are similar if those 2 images are found in the bigger listing
-            // TODO: remove
-            // if (similarHashesInBiggerList.length === 2) {
-            //     console.log('Similarity matrix:');
-            //     console.log(similarityMatrix);
-            // }
-
             return similarHashesInBiggerList.length === 2;
         }
-
-        // TODO: remove
-        // if (similarHashesInBiggerList.length >= Math.ceil(smallerListLength / 2)) {
-        //     console.log('Similarity matrix:');
-        //     console.log(similarityMatrix);
-        // }
 
         // Listings are similar if more than half of the smaller list images are found in the bigger one
         return similarHashesInBiggerList.length >= Math.ceil(smallerListLength / 2);

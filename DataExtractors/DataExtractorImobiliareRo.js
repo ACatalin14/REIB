@@ -1,6 +1,5 @@
 import { DataExtractor } from './DataExtractor.js';
 import { load } from 'cheerio';
-import { consoleLog } from '../Helpers/Utils.js';
 
 export class DataExtractorImobiliareRo extends DataExtractor {
     setDataSource(html) {
@@ -97,9 +96,6 @@ export class DataExtractorImobiliareRo extends DataExtractor {
     }
 
     async extractImageUrls(browserPage) {
-        // TODO: remove
-        consoleLog('Searching for image urls in listing...');
-
         if (this.hasNoImagesOfficially()) {
             return [];
         }
@@ -138,9 +134,6 @@ export class DataExtractorImobiliareRo extends DataExtractor {
 
         // Delete the last image since it is the same with the first image
         imageUrls.splice(imageUrls.length - 1, 1);
-
-        // TODO: remove
-        consoleLog(`Found ${imageUrls.length} image urls in listing.`);
 
         return imageUrls;
     }

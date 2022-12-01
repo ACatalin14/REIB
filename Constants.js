@@ -10,7 +10,7 @@ export const SIMILARITY_HASH_THRESHOLD = 0.9;
 
 export const DEFAULT_HASH_SIZE = 16; // Use powers of 2
 
-export const LOGS_SOURCE_IMOBILIARE_RO = 'imobiliare.ro';
+export const SOURCE_IMOBILIARE_RO = 'imobiliare.ro';
 
 export const DB_COLLECTION_CLOSED_LISTINGS = 'closedListings';
 export const DB_COLLECTION_IMOBILIARE = 'imobiliareRoListings';

@@ -7,17 +7,15 @@ export class IndexInitializerImobiliareRo extends IndexInitializer {
     async start() {
         const xmlListings = await this.fetchListingsFromXml(URL_XML_IMOBILIARE_LISTINGS_BUCHAREST);
 
-        consoleLog('Inserting listings short data to database...');
         await this.dbMarketListings.insertMany(xmlListings);
-        consoleLog('Inserted to database.');
 
         let browser, browserPage;
 
         try {
+            consoleLog(`[${this.source}] Launching headless browser...`);
             [browser, browserPage] = await this.getNewBrowserAndNewPage();
-            consoleLog(`[${this.logsSource}] Launched headless browser.`);
         } catch (error) {
-            consoleLog(`[${this.logsSource}] Cannot launch headless browser.`);
+            consoleLog(`[${this.source}] Cannot launch headless browser.`);
             consoleLog(error);
             throw error;
         }
@@ -26,10 +24,10 @@ export class IndexInitializerImobiliareRo extends IndexInitializer {
             let listingData;
 
             try {
+                consoleLog(`[${this.source}] Fetching listing data from: ${xmlListings[i].id}`);
                 listingData = await this.fetchListingDataFromPage(xmlListings[i], browserPage);
-                consoleLog(`[${this.logsSource}] Fetched successfully listing data from: ${xmlListings[i].id}`);
             } catch (error) {
-                consoleLog(`[${this.logsSource}] Cannot fetch listing data from: ${xmlListings[i].id}`);
+                consoleLog(`[${this.source}] Cannot fetch listing data from: ${xmlListings[i].id}`);
                 consoleLog(error);
                 await browser.close();
                 [browser, browserPage] = await this.getNewBrowserAndNewPage();
@@ -38,10 +36,11 @@ export class IndexInitializerImobiliareRo extends IndexInitializer {
             }
 
             await this.dbMarketListings.updateOne({ id: listingData.id }, { $set: listingData });
+            consoleLog(`[${this.source}] Fetched and saved listing successfully. Waiting for the next request...`);
             await delay(this.smartRequester.getRandomRestingDelay());
         }
 
         await browser.close();
-        consoleLog(`[${this.logsSource}] Initialization complete.`);
+        consoleLog(`[${this.source}] Initialization complete.`);
     }
 }

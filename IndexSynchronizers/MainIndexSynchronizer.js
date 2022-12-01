@@ -4,7 +4,7 @@ import { SmartRequester } from '../Helpers/SmartRequester.js';
 import {
     DB_COLLECTION_CLOSED_LISTINGS,
     DB_COLLECTION_IMOBILIARE,
-    LOGS_SOURCE_IMOBILIARE_RO,
+    SOURCE_IMOBILIARE_RO,
     REFERER_IMOBILIARE_RO,
     REFERRERS_IMOBILIARE_RO,
     START_DELAY,
@@ -13,6 +13,7 @@ import { ImageHasher } from '../Helpers/ImageHasher.js';
 import { DbCollection } from '../DbLayer/DbCollection.js';
 import delay from 'delay';
 import { DbClient } from '../DbLayer/DbClient.js';
+import { consoleLog } from '../Helpers/Utils.js';
 
 export class MainIndexSynchronizer {
     constructor(dbClient) {
@@ -24,9 +25,14 @@ export class MainIndexSynchronizer {
         await delay(START_DELAY);
 
         this.dbClient = new DbClient();
-        await this.dbClient.connect();
 
-        // TODO: Make a test request to MongoDB to check it is up and running (not down for maintenance etc.)
+        try {
+            await this.dbClient.connect();
+        } catch (error) {
+            consoleLog('[reib] Cannot connect to Mongo DB.');
+            consoleLog(error);
+            return;
+        }
 
         await this.syncIndexImobiliareRo();
         // await this.syncIndexOlxRo();
@@ -46,7 +52,7 @@ export class MainIndexSynchronizer {
         const dbClosedListings = new DbCollection(DB_COLLECTION_CLOSED_LISTINGS, this.dbClient);
 
         const synchronizer = new IndexSynchronizerImobiliareRo(
-            LOGS_SOURCE_IMOBILIARE_RO,
+            SOURCE_IMOBILIARE_RO,
             dbCollection,
             dataExtractor,
             smartRequester,

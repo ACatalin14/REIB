@@ -4,7 +4,7 @@ import { consoleLog } from '../Helpers/Utils.js';
 
 export class IndexSynchronizerImobiliareRo extends IndexSynchronizer {
     async sync() {
-        consoleLog(`[${this.logsSource}] Synchronization started.`);
+        consoleLog(`[${this.source}] Synchronization started.`);
 
         const xmlListings = await this.fetchListingsFromXml(URL_XML_IMOBILIARE_LISTINGS_BUCHAREST);
 
@@ -14,6 +14,6 @@ export class IndexSynchronizerImobiliareRo extends IndexSynchronizer {
 
         await this.syncCurrentMarketListingsFromXml(xmlListings);
 
-        consoleLog(`[${this.logsSource}] Synchronization complete.`);
+        consoleLog(`[${this.source}] Synchronization complete.`);
     }
 }

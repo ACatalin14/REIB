@@ -2,8 +2,8 @@ import { consoleLog } from '../Helpers/Utils.js';
 import { load } from 'cheerio';
 
 export class IndexBuilder {
-    constructor(logsSource, dbCollection, dataExtractor, smartRequester, imageHasher) {
-        this.logsSource = logsSource;
+    constructor(source, dbCollection, dataExtractor, smartRequester, imageHasher) {
+        this.source = source;
         this.dbMarketListings = dbCollection;
         this.dataExtractor = dataExtractor;
         this.smartRequester = smartRequester;
@@ -11,21 +11,13 @@ export class IndexBuilder {
     }
 
     async fetchListingsFromXml(xmlUrl) {
-        // TODO: remove
-        // return [
-        //     {
-        //         id: 'https://www.imobiliare.ro/vanzare-apartamente/bucuresti/aviatorilor/apartament-de-vanzare-3-camere-X1920008S',
-        //         lastModified: new Date(),
-        //     },
-        // ];
-
         let response;
 
         try {
+            consoleLog(`[${this.source}] Fetching XML from: ${xmlUrl}`);
             response = await this.smartRequester.get(xmlUrl);
-            consoleLog(`[${this.logsSource}] Full XML fetched successfully.`);
         } catch (error) {
-            consoleLog(`[${this.logsSource}] Error while fetching XML from: ${xmlUrl}.`);
+            consoleLog(`[${this.source}] Error while fetching XML from: ${xmlUrl}.`);
             consoleLog(error);
             return;
         }
@@ -45,7 +37,7 @@ export class IndexBuilder {
         });
 
         // TODO: Change back to full array: return xmlListings;
-        return [xmlListings[1834]];
+        return xmlListings[1834].slice(0, 5);
     }
 
     async fetchListingDataFromPage(listingShortData, browserPage) {
@@ -54,8 +46,6 @@ export class IndexBuilder {
         listingData.images = await this.imageHasher.fetchBinHashesFromUrls(listingData.imageUrls);
 
         delete listingData.imageUrls;
-
-        consoleLog('Listing fetched successfully. Waiting...');
 
         return listingData;
     }
@@ -79,20 +69,18 @@ export class IndexBuilder {
         let htmlResponse;
 
         try {
-            consoleLog('Fetching HTML listing from:', listingShortData.id);
             // TODO: Maybe check: browserPage !== null ? htmlResponse = getPageFromUrl() : apiResponse = get();
             htmlResponse = await this.smartRequester.getPageFromUrl(browserPage, listingShortData.id);
-            consoleLog(`Fetched successfully HTML listing.`);
             return htmlResponse;
         } catch (error) {
-            consoleLog(`[${this.logsSource}] Cannot fetch listing HTML from: ${listingShortData.id}.`);
+            consoleLog(`[${this.source}] Cannot fetch listing HTML from: ${listingShortData.id}.`);
             throw error;
         }
     }
 
     getListingDetailsWithExtractor(listingShortData) {
         if (!this.dataExtractor.hasListingDetails()) {
-            throw new Error(`[${this.logsSource}] Cannot find all listing details at: ${listingShortData.id}.`);
+            throw new Error(`[${this.source}] Cannot find all listing details at: ${listingShortData.id}.`);
         }
 
         const price = this.dataExtractor.extractPrice();
@@ -113,7 +101,7 @@ export class IndexBuilder {
         try {
             return await this.dataExtractor.extractImageUrls(browserPage);
         } catch (error) {
-            consoleLog(`[${this.logsSource}] Cannot extract image URL's from listing: ${listingShortData.id}.`);
+            consoleLog(`[${this.source}] Cannot extract image URL's from listing: ${listingShortData.id}.`);
             consoleLog(error);
             throw error;
         }
