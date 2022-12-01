@@ -4,13 +4,22 @@ import { IndexInitializer } from './IndexInitializer.js';
 import { URL_XML_IMOBILIARE_LISTINGS_BUCHAREST } from '../Constants.js';
 
 export class IndexInitializerImobiliareRo extends IndexInitializer {
+    getListingIdFromUrl(url) {
+        const lastDashIndex = url.lastIndexOf('-');
+        return url.slice(lastDashIndex + 1);
+    }
+
     async start() {
         consoleLog(`[${this.source}] Initialization started.`);
 
         const xmlListings = await this.fetchListingsFromXml(URL_XML_IMOBILIARE_LISTINGS_BUCHAREST);
 
-        consoleLog(`[${this.source}] Inserting ${xmlListings.length} listings from XML to database...`)
-        await this.dbMarketListings.insertMany(xmlListings);
+        consoleLog(`[${this.source}] Inserting ${xmlListings.length} listings from XML to database...`);
+        const shortListingsToInsert = xmlListings.map((listing) => ({
+            id: listing.id,
+            lastModified: listing.lastModified,
+        }));
+        await this.dbMarketListings.insertMany(shortListingsToInsert);
 
         let browser, browserPage;
 
@@ -26,10 +35,10 @@ export class IndexInitializerImobiliareRo extends IndexInitializer {
             let listingData;
 
             try {
-                consoleLog(`[${this.source}] Fetching listing [${i + 1}] from: ${xmlListings[i].id}`);
+                consoleLog(`[${this.source}] Fetching listing [${i + 1}] from: ${xmlListings[i].url}`);
                 listingData = await this.fetchListingDataFromPage(xmlListings[i], browserPage);
             } catch (error) {
-                consoleLog(`[${this.source}] Cannot fetch listing data from: ${xmlListings[i].id}`);
+                consoleLog(`[${this.source}] Cannot fetch listing data from: ${xmlListings[i].url}`);
                 consoleLog(error);
                 await browser.close();
                 [browser, browserPage] = await this.getNewBrowserAndNewPage();

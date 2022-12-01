@@ -3,6 +3,11 @@ import { URL_XML_IMOBILIARE_LISTINGS_BUCHAREST } from '../Constants.js';
 import { consoleLog } from '../Helpers/Utils.js';
 
 export class IndexSynchronizerImobiliareRo extends IndexSynchronizer {
+    getListingIdFromUrl(url) {
+        const lastDashIndex = url.lastIndexOf('-');
+        return url.slice(lastDashIndex + 1);
+    }
+
     async sync() {
         consoleLog(`[${this.source}] Synchronization started.`);
 

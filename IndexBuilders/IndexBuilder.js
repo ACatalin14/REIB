@@ -10,6 +10,10 @@ export class IndexBuilder {
         this.imageHasher = imageHasher;
     }
 
+    getListingIdFromUrl(url) {
+        // To be implemented
+    }
+
     async fetchListingsFromXml(xmlUrl) {
         let response;
 
@@ -26,8 +30,10 @@ export class IndexBuilder {
         let xmlListings = [];
 
         $('loc').each((index, element) => {
+            const url = $(element).text();
             xmlListings[index] = {
-                id: $(element).text(),
+                url: url,
+                id: this.getListingIdFromUrl(url),
                 lastModified: null,
             };
         });
@@ -71,17 +77,17 @@ export class IndexBuilder {
 
         try {
             // TODO: Maybe check: browserPage !== null ? htmlResponse = getPageFromUrl() : apiResponse = get();
-            htmlResponse = await this.smartRequester.getPageFromUrl(browserPage, listingShortData.id);
+            htmlResponse = await this.smartRequester.getPageFromUrl(browserPage, listingShortData.url);
             return htmlResponse;
         } catch (error) {
-            consoleLog(`[${this.source}] Cannot fetch listing HTML from: ${listingShortData.id}.`);
+            consoleLog(`[${this.source}] Cannot fetch listing HTML from: ${listingShortData.url}.`);
             throw error;
         }
     }
 
     getListingDetailsWithExtractor(listingShortData) {
         if (!this.dataExtractor.hasListingDetails()) {
-            throw new Error(`[${this.source}] Cannot find all listing details at: ${listingShortData.id}.`);
+            throw new Error(`[${this.source}] Cannot find all listing details at: ${listingShortData.url}.`);
         }
 
         const price = this.dataExtractor.extractPrice();
@@ -102,7 +108,7 @@ export class IndexBuilder {
         try {
             return await this.dataExtractor.extractImageUrls(browserPage);
         } catch (error) {
-            consoleLog(`[${this.source}] Cannot extract image URL's from listing: ${listingShortData.id}.`);
+            consoleLog(`[${this.source}] Cannot extract image URL's from listing: ${listingShortData.url}.`);
             consoleLog(error);
             throw error;
         }

@@ -142,10 +142,10 @@ export class IndexSynchronizer extends IndexBuilder {
         let newListingData;
 
         try {
-            consoleLog(`[${this.source}] Fetching to create listing from: ${listingShortData.id}`);
+            consoleLog(`[${this.source}] Fetching to create listing from: ${listingShortData.url}`);
             newListingData = await this.fetchListingDataFromPage(listingShortData, browserPage);
         } catch (error) {
-            consoleLog(`[${this.source}] Cannot fetch new listing data from: ${listingShortData.id}`);
+            consoleLog(`[${this.source}] Cannot fetch new listing data from: ${listingShortData.url}`);
             throw error;
         }
 
@@ -156,10 +156,10 @@ export class IndexSynchronizer extends IndexBuilder {
         let listingData;
 
         try {
-            consoleLog(`[${this.source}] Fetching to update listing from: ${listingShortData.id}`);
+            consoleLog(`[${this.source}] Fetching to update listing from: ${listingShortData.url}`);
             listingData = await this.fetchListingDataFromPage(listingShortData, browserPage);
         } catch (error) {
-            consoleLog(`[${this.source}] Cannot fetch updated listing data from: ${listingShortData.id}`);
+            consoleLog(`[${this.source}] Cannot fetch updated listing data from: ${listingShortData.url}`);
             throw error;
         }
 
