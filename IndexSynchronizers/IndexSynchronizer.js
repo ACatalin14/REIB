@@ -1,12 +1,17 @@
 import { IndexBuilder } from '../IndexBuilders/IndexBuilder.js';
 import { consoleLog, mapObjectsToValueOfKey } from '../Helpers/Utils.js';
 import delay from 'delay';
+import { SYNCHRONIZATION_TIME } from '../Constants.js';
 
 export class IndexSynchronizer extends IndexBuilder {
-    constructor(source, dbCollection, dataExtractor, smartRequester, imageHasher, dbClosedListings) {
+    constructor(source, dbCollection, dataExtractor, smartRequester, imageHasher, dbClosedListings, dbSyncStats) {
         super(source, dbCollection, dataExtractor, smartRequester, imageHasher);
         this.dbClosedListings = dbClosedListings;
+        this.dbSyncStats = dbSyncStats;
         this.dbClosedListingsRecords = [];
+        this.listingsToBeClosedCount = 0;
+        this.listingsToBeAddedCount = 0;
+        this.listingsToBeUpdatedCount = 0;
     }
 
     async sync() {
@@ -47,6 +52,7 @@ export class IndexSynchronizer extends IndexBuilder {
         if (listingsToBeClosed.length > 0) {
             this.dbClosedListingsRecords.push(...listingsToBeClosed);
             dbOperations.push(this.dbClosedListings.insertMany(listingsToBeClosed));
+            this.listingsToBeClosedCount = listingsToBeClosed.length;
         }
 
         await Promise.all(dbOperations);
@@ -125,6 +131,7 @@ export class IndexSynchronizer extends IndexBuilder {
         await browser.close();
 
         if (listingsToBeAdded.length > 0) {
+            this.listingsToBeAddedCount = listingsToBeAdded.length;
             await this.dbMarketListings.insertMany(listingsToBeAdded);
         }
 
@@ -156,6 +163,7 @@ export class IndexSynchronizer extends IndexBuilder {
             throw error;
         }
 
+        this.listingsToBeUpdatedCount++;
         await this.dbMarketListings.updateOne({ id: listingData.id }, { $set: listingData });
     }
 
@@ -185,5 +193,20 @@ export class IndexSynchronizer extends IndexBuilder {
         }
 
         return listing2;
+    }
+
+    async insertTodaySyncStats() {
+        const today = new Date();
+        const month = today.getMonth() + 1;
+        const day = today.getDate();
+        const syncDate = new Date(`2022-${month}-${day} ${SYNCHRONIZATION_TIME}`);
+
+        await this.dbSyncStats.insertOne({
+            source: this.source,
+            date: syncDate,
+            closedListingsCount: this.listingsToBeClosedCount,
+            newListingsCount: this.listingsToBeAddedCount,
+            updatedListingsCount: this.listingsToBeUpdatedCount,
+        });
     }
 }

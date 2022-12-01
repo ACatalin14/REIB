@@ -14,6 +14,8 @@ export class IndexSynchronizerImobiliareRo extends IndexSynchronizer {
 
         await this.syncCurrentMarketListingsFromXml(xmlListings);
 
+        await this.insertTodaySyncStats();
+
         consoleLog(`[${this.source}] Synchronization complete.`);
     }
 }

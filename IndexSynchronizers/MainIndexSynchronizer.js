@@ -8,6 +8,7 @@ import {
     REFERER_IMOBILIARE_RO,
     REFERRERS_IMOBILIARE_RO,
     START_DELAY,
+    DB_COLLECTION_SYNC_STATS,
 } from '../Constants.js';
 import { ImageHasher } from '../Helpers/ImageHasher.js';
 import { DbCollection } from '../DbLayer/DbCollection.js';
@@ -52,6 +53,7 @@ export class MainIndexSynchronizer {
         });
         const imageHasher = new ImageHasher(smartRequester);
         const dbClosedListings = new DbCollection(DB_COLLECTION_CLOSED_LISTINGS, this.dbClient);
+        const dbSyncStats = new DbCollection(DB_COLLECTION_SYNC_STATS, this.dbClient);
 
         const synchronizer = new IndexSynchronizerImobiliareRo(
             SOURCE_IMOBILIARE_RO,
@@ -59,7 +61,8 @@ export class MainIndexSynchronizer {
             dataExtractor,
             smartRequester,
             imageHasher,
-            dbClosedListings
+            dbClosedListings,
+            dbSyncStats
         );
 
         await synchronizer.sync();

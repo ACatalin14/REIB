@@ -3,6 +3,8 @@ export const START_DELAY = parseInt((Math.random() * 10 * 60 * 1000) / 600000); 
 export const RESTING_DELAY_MIN = 1000; // 1 seconds
 export const RESTING_DELAY_MAX = 5000; // 5 seconds
 
+export const SYNCHRONIZATION_TIME = '14:00';
+
 // Number of similar images between two listings so they can be considered similar listings
 export const SIMILARITY_IMAGES_COUNT_THRESHOLD = 3;
 // Percentage threshold between two image hashes so they can be considered similar images
@@ -17,6 +19,7 @@ export const DB_COLLECTION_IMOBILIARE = 'imobiliareRoListings';
 export const DB_COLLECTION_OLX = 'olxRoListings';
 export const DB_COLLECTION_STORIA = 'storiaRoListings';
 export const DB_COLLECTION_ANUNTUL = 'anuntulRoListings';
+export const DB_COLLECTION_SYNC_STATS = 'syncStats';
 
 export const URL_SSL_PROXIES = 'https://sslproxies.org/';
 export const URL_XML_IMOBILIARE_LISTINGS_BUCHAREST =
