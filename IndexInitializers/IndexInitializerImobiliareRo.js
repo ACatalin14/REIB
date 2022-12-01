@@ -5,6 +5,8 @@ import { URL_XML_IMOBILIARE_LISTINGS_BUCHAREST } from '../Constants.js';
 
 export class IndexInitializerImobiliareRo extends IndexInitializer {
     async start() {
+        consoleLog(`[${this.source}] Initialization started.`);
+
         const xmlListings = await this.fetchListingsFromXml(URL_XML_IMOBILIARE_LISTINGS_BUCHAREST);
 
         await this.dbMarketListings.insertMany(xmlListings);
@@ -12,7 +14,6 @@ export class IndexInitializerImobiliareRo extends IndexInitializer {
         let browser, browserPage;
 
         try {
-            consoleLog(`[${this.source}] Launching headless browser...`);
             [browser, browserPage] = await this.getNewBrowserAndNewPage();
         } catch (error) {
             consoleLog(`[${this.source}] Cannot launch headless browser.`);
@@ -24,7 +25,7 @@ export class IndexInitializerImobiliareRo extends IndexInitializer {
             let listingData;
 
             try {
-                consoleLog(`[${this.source}] Fetching listing data from: ${xmlListings[i].id}`);
+                consoleLog(`[${this.source}] Fetching listing [${i + 1}] from: ${xmlListings[i].id}`);
                 listingData = await this.fetchListingDataFromPage(xmlListings[i], browserPage);
             } catch (error) {
                 consoleLog(`[${this.source}] Cannot fetch listing data from: ${xmlListings[i].id}`);

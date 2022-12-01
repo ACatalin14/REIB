@@ -36,8 +36,9 @@ export class IndexBuilder {
             xmlListings[index].lastModified = new Date($(element).text());
         });
 
-        // TODO: Change back to full array: return xmlListings;
-        return xmlListings.slice(1540, 1545);
+        consoleLog(`[${this.source}] Found ${xmlListings.length} listings in XML.`);
+
+        return xmlListings;
     }
 
     async fetchListingDataFromPage(listingShortData, browserPage) {

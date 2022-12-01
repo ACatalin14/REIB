@@ -21,6 +21,7 @@ export class MainIndexInitializer {
         this.dbClient = new DbClient();
 
         try {
+            consoleLog('[reib] Connecting to the database...');
             await this.dbClient.connect();
         } catch (error) {
             consoleLog('[reib] Cannot connect to Mongo DB.');
@@ -36,6 +37,7 @@ export class MainIndexInitializer {
         ]);
 
         await this.dbClient.disconnect();
+        consoleLog('[reib] Initialization complete.');
     }
 
     async initializeIndexImobiliareRo() {

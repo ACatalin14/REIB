@@ -27,6 +27,7 @@ export class MainIndexSynchronizer {
         this.dbClient = new DbClient();
 
         try {
+            consoleLog('[reib] Connecting to the database...');
             await this.dbClient.connect();
         } catch (error) {
             consoleLog('[reib] Cannot connect to Mongo DB.');
@@ -40,6 +41,7 @@ export class MainIndexSynchronizer {
         // await this.syncIndexAnuntulRo();
 
         await this.dbClient.disconnect();
+        consoleLog('[reib] Synchronization complete.');
     }
 
     async syncIndexImobiliareRo() {
