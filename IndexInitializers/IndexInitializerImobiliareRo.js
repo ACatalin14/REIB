@@ -1,5 +1,5 @@
 import delay from 'delay';
-import { consoleLog, mapObjectsToValueOfKey } from '../Helpers/Utils.js';
+import { consoleLog } from '../Helpers/Utils.js';
 import { IndexInitializer } from './IndexInitializer.js';
 import { URL_XML_IMOBILIARE_LISTINGS_BUCHAREST } from '../Constants.js';
 
@@ -13,9 +13,8 @@ export class IndexInitializerImobiliareRo extends IndexInitializer {
         consoleLog(`[${this.source}] Initialization started.`);
 
         const xmlListings = await this.fetchListingsFromXml(URL_XML_IMOBILIARE_LISTINGS_BUCHAREST);
-
         const xmlListingsToInit = await this.getXmlListingsToInit(xmlListings);
-        await this.upsertXmlListingsToDatabase(xmlListingsToInit);
+        await this.prepareListingsToInit(xmlListingsToInit);
 
         let browser, browserPage;
 
@@ -49,35 +48,5 @@ export class IndexInitializerImobiliareRo extends IndexInitializer {
 
         await browser.close();
         consoleLog(`[${this.source}] Initialization complete.`);
-    }
-
-    async getXmlListingsToInit(xmlListings) {
-        const initializedListingsIds = await this.dbMarketListings.find(
-            { price: { $exists: true } },
-            { projection: { _id: 0, id: 1 } }
-        );
-
-        const initializedListingsIdsSet = new Set(mapObjectsToValueOfKey(initializedListingsIds, 'id'));
-
-        return xmlListings.filter((xmlListing) => !initializedListingsIdsSet.has(xmlListing.id));
-    }
-
-    async upsertXmlListingsToDatabase(xmlListings) {
-        consoleLog(`[${this.source}] Upserting ${xmlListings.length} listings from XML to database...`);
-
-        for (let i = 0; i < xmlListings.length; i++) {
-            await this.dbMarketListings.updateOne(
-                { id: xmlListings[i].id },
-                {
-                    $set: {
-                        id: xmlListings[i].id,
-                        lastModified: xmlListings[i].lastModified,
-                    },
-                },
-                { upsert: true }
-            );
-        }
-
-        consoleLog(`[${this.source}] Upserted listings.`);
     }
 }
