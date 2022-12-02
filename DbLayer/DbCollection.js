@@ -25,8 +25,8 @@ export class DbCollection {
         await this.getCollection().insertMany(records);
     }
 
-    async updateOne(filter, update) {
-        await this.getCollection().updateOne(filter, update);
+    async updateOne(filter, update, options = {}) {
+        await this.getCollection().updateOne(filter, update, options);
     }
 
     async deleteOne(filter) {

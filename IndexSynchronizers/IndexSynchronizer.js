@@ -19,16 +19,21 @@ export class IndexSynchronizer extends IndexBuilder {
     }
 
     async fetchDeletedListingsFromDbComparedToXml(xmlListings) {
-        const dbListingsWithIds = await this.dbMarketListings.find({}, { projection: { _id: 0, id: 1 } });
+        try {
+            const dbListingsWithIds = await this.dbMarketListings.find({}, { projection: { _id: 0, id: 1 } });
 
-        const dbListingsIdsSet = new Set(mapObjectsToValueOfKey(dbListingsWithIds, 'id'));
-        const xmlListingsIdsSet = new Set(mapObjectsToValueOfKey(xmlListings, 'id'));
+            const dbListingsIdsSet = new Set(mapObjectsToValueOfKey(dbListingsWithIds, 'id'));
+            const xmlListingsIdsSet = new Set(mapObjectsToValueOfKey(xmlListings, 'id'));
 
-        const deletedListingsIds = [...dbListingsIdsSet].filter((dbListing) => !xmlListingsIdsSet.has(dbListing));
+            const deletedListingsIds = [...dbListingsIdsSet].filter((dbListing) => !xmlListingsIdsSet.has(dbListing));
 
-        const deletedListings = await this.dbMarketListings.find({ id: { $in: deletedListingsIds } });
+            const deletedListings = await this.dbMarketListings.find({ id: { $in: deletedListingsIds } });
 
-        return { deletedListingsIds, deletedListings };
+            return { deletedListingsIds, deletedListings };
+        } catch (error) {
+            consoleLog(`[${this.source}] Cannot fetch deleted listings from database.`);
+            consoleLog(error);
+        }
     }
 
     async syncClosedListings(deletedListingsIds, deletedListings) {

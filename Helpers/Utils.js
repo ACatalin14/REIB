@@ -1,8 +1,13 @@
+import fs from 'fs';
+
 export function consoleLog(...logs) {
     const timeFormatting = { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' };
     const currentDate = new Date();
+    const timestamp = '[' + currentDate.toLocaleTimeString('en-US', timeFormatting) + ']';
+    const content = timestamp + [...logs].join(' ');
 
-    console.log('[' + currentDate.toLocaleTimeString('en-US', timeFormatting) + ']', ...logs);
+    console.log(content);
+    fs.appendFile('./reib.log', content + '\n', () => {});
 }
 
 export function mapObjectsToValueOfKey(objects, key) {

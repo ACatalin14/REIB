@@ -36,7 +36,14 @@ export class MainIndexInitializer {
             // this.initializeAnuntulRoIndex(),
         ]);
 
-        await this.dbClient.disconnect();
+        try {
+            consoleLog('[reib] Disonnecting from the database...');
+            await this.dbClient.disconnect();
+        } catch (error) {
+            consoleLog('[reib] Cannot disconnect from Mongo DB.');
+            consoleLog(error);
+        }
+
         consoleLog('[reib] Initialization complete.');
     }
 

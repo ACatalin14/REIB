@@ -41,7 +41,14 @@ export class MainIndexSynchronizer {
         // await this.syncIndexStoriaRo();
         // await this.syncIndexAnuntulRo();
 
-        await this.dbClient.disconnect();
+        try {
+            consoleLog('[reib] Disonnecting from the database...');
+            await this.dbClient.disconnect();
+        } catch (error) {
+            consoleLog('[reib] Cannot disconnect from Mongo DB.');
+            consoleLog(error);
+        }
+
         consoleLog('[reib] Synchronization complete.');
     }
 
