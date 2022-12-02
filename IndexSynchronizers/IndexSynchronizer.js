@@ -1,5 +1,5 @@
 import { IndexBuilder } from '../IndexBuilders/IndexBuilder.js';
-import { consoleLog, mapObjectsToValueOfKey } from '../Helpers/Utils.js';
+import { consoleLog, indexObjectsByKey, mapObjectsToValueOfKey } from '../Helpers/Utils.js';
 import delay from 'delay';
 import { SYNCHRONIZATION_TIME } from '../Constants.js';
 
@@ -18,7 +18,7 @@ export class IndexSynchronizer extends IndexBuilder {
         // To be implemented
     }
 
-    async fetchDeletedListingsFromDbComparedToXml(xmlListings) {
+    async fetchMissingMarketListingsFromXml(xmlListings) {
         try {
             const dbListingsWithIds = await this.dbMarketListings.find({}, { projection: { _id: 0, id: 1 } });
 
@@ -32,7 +32,7 @@ export class IndexSynchronizer extends IndexBuilder {
             return { deletedListingsIds, deletedListings };
         } catch (error) {
             consoleLog(`[${this.source}] Cannot fetch deleted listings from database.`);
-            consoleLog(error);
+            throw error;
         }
     }
 
@@ -61,6 +61,8 @@ export class IndexSynchronizer extends IndexBuilder {
         }
 
         await Promise.all(dbOperations);
+
+        consoleLog(`[${this.source}] Synchronized closed listings.`);
     }
 
     async fetchSimilarClosedListing(listing) {
@@ -112,26 +114,7 @@ export class IndexSynchronizer extends IndexBuilder {
 
         let [browser, browserPage] = await this.getNewBrowserAndNewPage();
 
-        for (let i = 0; i < xmlListings.length; i++) {
-            try {
-                const dbListing = await this.dbMarketListings.findOne({ id: xmlListings[i].id });
-
-                if (!dbListing) {
-                    await this.createMarketListing(xmlListings[i], browserPage, listingsToBeAdded);
-                    await delay(this.smartRequester.getRandomRestingDelay());
-                    continue;
-                }
-
-                if (dbListing.lastModified < xmlListings[i].lastModified) {
-                    await this.updateMarketListing(xmlListings[i], browserPage);
-                    await delay(this.smartRequester.getRandomRestingDelay());
-                }
-            } catch (error) {
-                consoleLog(error);
-                await browser.close();
-                [browser, browserPage] = await this.getNewBrowserAndNewPage();
-            }
-        }
+        await this.handleXmlListingsToSynchronize(xmlListings, browser, browserPage, listingsToBeAdded);
 
         await browser.close();
 
@@ -141,6 +124,37 @@ export class IndexSynchronizer extends IndexBuilder {
         }
 
         consoleLog(`[${this.source}] Synchronized current market listings.`);
+    }
+
+    async handleXmlListingsToSynchronize(xmlListings, browser, browserPage, listingsToBeAdded) {
+        const dbMarketListingsRecords = await this.dbMarketListings.find({}, { _id: 0, id: 1, lastModified: 1 });
+        const dbMarketListingsMap = indexObjectsByKey(dbMarketListingsRecords, 'id');
+        const dbMarketListingsIds = new Set(Object.keys(dbMarketListingsMap));
+
+        for (let i = 0; i < xmlListings.length; i++) {
+            try {
+                const listingId = xmlListings[i].id;
+                const isOnMarket = dbMarketListingsIds.has(listingId);
+                if (!isOnMarket) {
+                    await this.createMarketListing(xmlListings[i], browserPage, listingsToBeAdded);
+                    consoleLog(`[${this.source}] Fetched and added listing to database. Waiting...`);
+                    await delay(this.smartRequester.getRandomRestingDelay());
+                    continue;
+                }
+
+                const marketListing = dbMarketListingsMap[listingId];
+                if (marketListing.lastModified < xmlListings[i].lastModified) {
+                    await this.updateMarketListing(xmlListings[i], browserPage);
+                    consoleLog(`[${this.source}] Fetched and updated listing in database. Waiting...`);
+                    await delay(this.smartRequester.getRandomRestingDelay());
+                }
+            } catch (error) {
+                consoleLog(`[${this.source}] Cannot process XML listing from: ${xmlListings[i].url}`);
+                consoleLog(error);
+                await browser.close();
+                [browser, browserPage] = await this.getNewBrowserAndNewPage();
+            }
+        }
     }
 
     async createMarketListing(listingShortData, browserPage, newMarketListings) {
@@ -170,34 +184,6 @@ export class IndexSynchronizer extends IndexBuilder {
 
         this.listingsToBeUpdatedCount++;
         await this.dbMarketListings.updateOne({ id: listingData.id }, { $set: listingData });
-    }
-
-    getOriginalListing(listing1, listing2) {
-        // Mainly look at the listings' prices, and select the cheaper one (this is what the buyers look into the most)
-        if (listing1.price < listing2.price) {
-            return listing1;
-        }
-
-        if (listing2.price < listing1.price) {
-            return listing2;
-        }
-
-        // When prices are equal, look at the surface, and select the bigger one by this criteria
-        if (listing1.surface > listing2.surface) {
-            return listing1;
-        }
-
-        if (listing2.surface > listing1.surface) {
-            return listing2;
-        }
-
-        // In the rare cases when both prices and surfaces are the same, select the one with more images
-        if (listing1.images.length >= listing2.images.length) {
-            // Also return the first listing when listings are truly equal
-            return listing1;
-        }
-
-        return listing2;
     }
 
     async insertTodaySyncStats() {

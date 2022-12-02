@@ -29,7 +29,7 @@ export class MainIndexInitializer {
             return;
         }
 
-        await Promise.allSettled([
+        await Promise.all([
             this.initializeIndexImobiliareRo(),
             // this.initializeOlxRoIndex(),
             // this.initializeStoriaRoIndex(),

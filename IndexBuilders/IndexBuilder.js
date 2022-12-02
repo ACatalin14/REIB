@@ -22,8 +22,7 @@ export class IndexBuilder {
             response = await this.smartRequester.get(xmlUrl);
         } catch (error) {
             consoleLog(`[${this.source}] Error while fetching XML from: ${xmlUrl}.`);
-            consoleLog(error);
-            return;
+            throw error;
         }
 
         const $ = load(response.data, { xmlMode: true });
@@ -109,15 +108,47 @@ export class IndexBuilder {
             return await this.dataExtractor.extractImageUrls(browserPage);
         } catch (error) {
             consoleLog(`[${this.source}] Cannot extract image URL's from listing: ${listingShortData.url}.`);
-            consoleLog(error);
             throw error;
         }
     }
 
     async getNewBrowserAndNewPage() {
-        let browser = await this.smartRequester.getHeadlessBrowser();
-        let browserPage = await browser.newPage();
+        try {
+            let browser = await this.smartRequester.getHeadlessBrowser();
+            let browserPage = await browser.newPage();
 
-        return [browser, browserPage];
+            return [browser, browserPage];
+        } catch (error) {
+            consoleLog(`[${this.source}] Cannot launch headless browser.`);
+            throw error;
+        }
+    }
+
+    getOriginalListing(listing1, listing2) {
+        // Mainly look at the listings' prices, and select the cheaper one (this is what the buyers look into the most)
+        if (listing1.price < listing2.price) {
+            return listing1;
+        }
+
+        if (listing2.price < listing1.price) {
+            return listing2;
+        }
+
+        // When prices are equal, look at the surface, and select the bigger one by this criteria
+        if (listing1.surface > listing2.surface) {
+            return listing1;
+        }
+
+        if (listing2.surface > listing1.surface) {
+            return listing2;
+        }
+
+        // In the rare cases when both prices and surfaces are the same, select the one with more images
+        if (listing1.images.length >= listing2.images.length) {
+            // Also return the first listing when listings are truly equal
+            return listing1;
+        }
+
+        return listing2;
     }
 }

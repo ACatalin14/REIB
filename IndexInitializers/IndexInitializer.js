@@ -1,5 +1,6 @@
 import { IndexBuilder } from '../IndexBuilders/IndexBuilder.js';
 import { consoleLog, mapObjectsToValueOfKey } from '../Helpers/Utils.js';
+import delay from 'delay';
 
 export class IndexInitializer extends IndexBuilder {
     async start() {
@@ -32,5 +33,32 @@ export class IndexInitializer extends IndexBuilder {
         await this.dbMarketListings.insertMany(shortListingsToInsert);
 
         consoleLog(`[${this.source}] Listings prepared for initialization.`);
+    }
+
+    async handleXmlListingsToInitialize(xmlListings, browser, browserPage) {
+        for (let i = 0; i < xmlListings.length; i++) {
+            let listingData;
+
+            try {
+                consoleLog(`[${this.source}] Fetching listing [${i + 1}] from: ${xmlListings[i].url}`);
+                listingData = await this.fetchListingDataFromPage(xmlListings[i], browserPage);
+            } catch (error) {
+                consoleLog(`[${this.source}] Cannot fetch listing data from: ${xmlListings[i].url}`);
+                consoleLog(error);
+                await browser.close();
+                [browser, browserPage] = await this.getNewBrowserAndNewPage();
+                await this.dbMarketListings.deleteOne({ id: xmlListings[i].id });
+                continue;
+            }
+
+            try {
+                await this.dbMarketListings.updateOne({ id: listingData.id }, { $set: listingData });
+                consoleLog(`[${this.source}] Fetched and saved listing successfully. Waiting...`);
+                await delay(this.smartRequester.getRandomRestingDelay());
+            } catch (error) {
+                consoleLog(`[${this.source}] Cannot update listing data from: ${xmlListings[i].url}`);
+                consoleLog(error);
+            }
+        }
     }
 }

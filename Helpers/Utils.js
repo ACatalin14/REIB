@@ -19,3 +19,13 @@ export function mapObjectsToValueOfKey(objects, key) {
 
     return values;
 }
+
+export function indexObjectsByKey(objects, key) {
+    const map = {};
+
+    for (let i = 0; i < objects.length; i++) {
+        map[objects[i][key]] = objects[i];
+    }
+
+    return map;
+}
