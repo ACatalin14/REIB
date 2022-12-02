@@ -103,39 +103,61 @@ export class DataExtractorImobiliareRo extends DataExtractor {
         await browserPage.click(
             '#galerie_detalii > div.swiper.main_slider > div.swiper-wrapper > div > a > img.front_image'
         );
-        const iframeElementHandle = await browserPage.waitForSelector('#modal-galerie', { timeout: 10000 });
-        const frame = await iframeElementHandle.contentFrame();
-        await frame.waitForSelector('#slider_imagini > div.swipe-wrap > div', { timeout: 10000 });
-        const html = await frame.content();
 
-        const $ = load(html);
-        let imageUrls = [];
+        const imageUrls = [];
 
-        $('#slider_imagini > div.swipe-wrap > div').each((index, div) => {
-            const img = $('a > img', div);
-            const src = img.attr('src');
-            const dataSrc = img.attr('data-src');
-            const dataOriginal = img.attr('data-original');
+        const [imageUrlsGalerie, imageUrlsSchite] = await Promise.all([
+            this.extractImageUrlsFromIframe('#modal-galerie', browserPage),
+            this.extractImageUrlsFromIframe('#modal-galerie_schite', browserPage)
+        ]);
 
-            if (dataOriginal && dataOriginal.indexOf('http') === 0) {
-                imageUrls.push(dataOriginal);
-                return;
-            }
+        imageUrls.push(...imageUrlsGalerie, ...imageUrlsSchite);
 
-            if (dataSrc && dataSrc.indexOf('http' === 0)) {
-                imageUrls.push(dataSrc);
-                return;
-            }
-
-            if (src && src.indexOf('http') === 0) {
-                imageUrls.push(src);
-            }
-        });
-
-        // Delete the last image since it is the same with the first image
-        imageUrls.splice(imageUrls.length - 1, 1);
+        if (!imageUrls.length) {
+            throw new Error(`[${this.source}] Cannot extract any image from listing.`);
+        }
 
         return imageUrls;
+    }
+
+    async extractImageUrlsFromIframe(iframeId, browserPage) {
+        try {
+            const iframeElementHandle = await browserPage.waitForSelector(iframeId, { timeout: 2000 });
+            const frame = await iframeElementHandle.contentFrame();
+            await frame.waitForSelector('#slider_imagini > div.swipe-wrap > div', { timeout: 2000 });
+            const html = await frame.content();
+
+            const $ = load(html);
+            let imageUrls = [];
+
+            $('#slider_imagini > div.swipe-wrap > div').each((index, div) => {
+                const img = $('a > img', div);
+                const src = img.attr('src');
+                const dataSrc = img.attr('data-src');
+                const dataOriginal = img.attr('data-original');
+
+                if (dataOriginal && dataOriginal.indexOf('http') === 0) {
+                    imageUrls.push(dataOriginal);
+                    return;
+                }
+
+                if (dataSrc && dataSrc.indexOf('http' === 0)) {
+                    imageUrls.push(dataSrc);
+                    return;
+                }
+
+                if (src && src.indexOf('http') === 0) {
+                    imageUrls.push(src);
+                }
+            });
+
+            // Delete the last image since it is the same with the first image
+            imageUrls.splice(imageUrls.length - 1, 1);
+
+            return imageUrls;
+        } catch (error) {
+            return [];
+        }
     }
 
     hasNoImagesOfficially() {
