@@ -18,7 +18,7 @@ export class IndexBuilder {
         let response;
 
         try {
-            consoleLog(`[${this.source}] Fetching XML from: ${xmlUrl}`, 123, 'abc');
+            consoleLog(`[${this.source}] Fetching XML from: ${xmlUrl}`);
             response = await this.smartRequester.get(xmlUrl);
         } catch (error) {
             consoleLog(`[${this.source}] Error while fetching XML from: ${xmlUrl}.`);
