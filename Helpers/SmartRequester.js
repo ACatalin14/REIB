@@ -43,7 +43,7 @@ export class SmartRequester {
     }
 
     async getHeadlessBrowser() {
-        return await puppeteer.launch({ args: ['--no-sandbox'] });
+        return await puppeteer.launch({ headless: false, args: ['--no-sandbox'] });
     }
 
     async getPageFromUrl(browserPage, url) {
