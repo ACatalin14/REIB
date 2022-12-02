@@ -41,16 +41,7 @@ export class IndexSynchronizer extends IndexBuilder {
 
         consoleLog(`[${this.source}] Synchronizing closed listings...`);
 
-        for (let i = 0; i < deletedListings.length; i++) {
-            const similarClosedListing = await this.fetchSimilarClosedListing(deletedListings[i]);
-
-            if (!similarClosedListing) {
-                const closedListing = { ...deletedListings[i], closedDate: new Date(), source: this.source };
-                listingsToBeClosed.push(closedListing);
-            } else {
-                await this.handleDeletedListingHavingSimilarClosedListing(deletedListings[i], similarClosedListing);
-            }
-        }
+        await this.handleDeletedListings(deletedListings, listingsToBeClosed);
 
         const dbOperations = [this.dbMarketListings.deleteMany({ id: { $in: deletedListingsIds } })];
 
@@ -63,6 +54,24 @@ export class IndexSynchronizer extends IndexBuilder {
         await Promise.all(dbOperations);
 
         consoleLog(`[${this.source}] Synchronized closed listings.`);
+    }
+
+    async handleDeletedListings(deletedListings, listingsToBeClosed) {
+        for (let i = 0; i < deletedListings.length; i++) {
+            const similarClosedListing = await this.fetchSimilarClosedListing(deletedListings[i]);
+
+            if (!similarClosedListing) {
+                const closedListing = { ...deletedListings[i], closedDate: new Date(), source: this.source };
+                listingsToBeClosed.push(closedListing);
+                continue;
+            }
+
+            await this.handleDeletedListingHavingSimilarClosedListing(
+                deletedListings[i],
+                similarClosedListing,
+                listingsToBeClosed
+            );
+        }
     }
 
     async fetchSimilarClosedListing(listing) {

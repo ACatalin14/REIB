@@ -13,6 +13,7 @@ export const SIMILARITY_HASH_THRESHOLD = 0.9;
 export const DEFAULT_HASH_SIZE = 16; // Use powers of 2
 
 export const SOURCE_IMOBILIARE_RO = 'imobiliare.ro';
+export const SOURCE_OLX_RO = 'olx.ro';
 
 export const DB_COLLECTION_CLOSED_LISTINGS = 'closedListings';
 export const DB_COLLECTION_IMOBILIARE = 'imobiliareRoListings';
@@ -20,6 +21,13 @@ export const DB_COLLECTION_OLX = 'olxRoListings';
 export const DB_COLLECTION_STORIA = 'storiaRoListings';
 export const DB_COLLECTION_ANUNTUL = 'anuntulRoListings';
 export const DB_COLLECTION_SYNC_STATS = 'syncStats';
+export const DB_COLLECTION_MARKET_STATS = 'marketStats';
+export const DB_COLLECTION_CLOSED_LISTINGS_STATS = 'closedListingsStats';
+
+// TODO: Update this array as the implementation goes on
+export const SOURCE_TO_DB_COLLECTION_MAP = {
+    [SOURCE_IMOBILIARE_RO]: DB_COLLECTION_IMOBILIARE,
+};
 
 export const URL_SSL_PROXIES = 'https://sslproxies.org/';
 export const URL_XML_IMOBILIARE_LISTINGS_BUCHAREST =

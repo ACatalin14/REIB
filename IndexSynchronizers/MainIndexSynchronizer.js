@@ -17,8 +17,8 @@ import { DbClient } from '../DbLayer/DbClient.js';
 import { consoleLog } from '../Helpers/Utils.js';
 
 export class MainIndexSynchronizer {
-    constructor(dbClient) {
-        this.dbClient = dbClient;
+    constructor() {
+        this.dbClient = null;
     }
 
     async sync() {
@@ -31,8 +31,8 @@ export class MainIndexSynchronizer {
             consoleLog('[reib] Connecting to the database...');
             await this.dbClient.connect();
         } catch (error) {
-            consoleLog('[reib] Cannot connect to Mongo DB.');
             consoleLog(error);
+            consoleLog('[reib] Cannot connect to Mongo DB.');
             return;
         }
 
@@ -45,8 +45,8 @@ export class MainIndexSynchronizer {
             consoleLog('[reib] Disonnecting from the database...');
             await this.dbClient.disconnect();
         } catch (error) {
-            consoleLog('[reib] Cannot disconnect from Mongo DB.');
             consoleLog(error);
+            consoleLog('[reib] Cannot disconnect from Mongo DB.');
         }
 
         consoleLog('[reib] Synchronization complete.');

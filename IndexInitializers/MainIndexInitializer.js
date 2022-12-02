@@ -24,8 +24,8 @@ export class MainIndexInitializer {
             consoleLog('[reib] Connecting to the database...');
             await this.dbClient.connect();
         } catch (error) {
-            consoleLog('[reib] Cannot connect to Mongo DB.');
             consoleLog(error);
+            consoleLog('[reib] Cannot connect to Mongo DB.');
             return;
         }
 
@@ -40,8 +40,8 @@ export class MainIndexInitializer {
             consoleLog('[reib] Disonnecting from the database...');
             await this.dbClient.disconnect();
         } catch (error) {
-            consoleLog('[reib] Cannot disconnect from Mongo DB.');
             consoleLog(error);
+            consoleLog('[reib] Cannot disconnect from Mongo DB.');
         }
 
         consoleLog('[reib] Initialization complete.');
