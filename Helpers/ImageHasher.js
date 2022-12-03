@@ -1,5 +1,5 @@
 import { Binary } from 'mongodb';
-import { DEFAULT_HASH_SIZE, SIMILARITY_HASH_THRESHOLD, SIMILARITY_IMAGES_COUNT_THRESHOLD } from '../Constants.js';
+import { DEFAULT_HASH_SIZE, SIMILARITY_HASH_THRESHOLD } from '../Constants.js';
 
 export class ImageHasher {
     constructor(smartRequester) {
@@ -72,6 +72,10 @@ export class ImageHasher {
 
         const results = await Promise.allSettled(promises);
         const images = results.filter((result) => result.status === 'fulfilled').map((result) => result.value);
+
+        if (images.length < results.length / 2) {
+            throw new Error('Cannot fetch half of images in listing.');
+        }
 
         return images.map((image) => this.dHash(image));
     }

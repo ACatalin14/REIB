@@ -38,6 +38,12 @@ export class DataExtractorImobiliareRo extends DataExtractor {
             return true;
         }
 
+        const roomsCountFromTitle = this.extractRoomsCountFromTitle();
+
+        if (roomsCountFromTitle) {
+            return true;
+        }
+
         switch (true) {
             case this.url.indexOf('garsoniera') >= 0:
             case this.url.indexOf('studio') >= 0:
@@ -74,16 +80,45 @@ export class DataExtractorImobiliareRo extends DataExtractor {
             return Number(roomsText);
         }
 
+        const roomsCountFromTitle = this.extractRoomsCountFromTitle();
+
+        if (roomsCountFromTitle) {
+            return roomsCountFromTitle;
+        }
+
         switch (true) {
             case this.url.indexOf('garsoniera') >= 0:
             case this.url.indexOf('studio') >= 0:
             case this.url.indexOf('1-camera') >= 0:
-                return Number(1);
+                return 1;
 
             default:
                 const numberMatches = this.url.match(/([0-9]+)-camere/);
                 return Number(numberMatches[1]);
         }
+    }
+
+    extractRoomsCountFromTitle() {
+        const $ = load(this.html);
+        const title = $('#content-wrapper div.titlu_top h1').get()[0];
+        const titleText = $(title).text().toLowerCase();
+
+        if (
+            titleText.indexOf('garsoniera') >= 0 ||
+            titleText.indexOf('studio') >= 0 ||
+            titleText.indexOf('o camera') >= 0 ||
+            titleText.indexOf('1 camera') >= 0
+        ) {
+            return 1;
+        }
+
+        const titleMatches = titleText.match(/([0-9]+) camere/);
+
+        if (titleMatches) {
+            return Number(titleMatches[1]);
+        }
+
+        return null;
     }
 
     extractSurface() {
@@ -111,7 +146,7 @@ export class DataExtractorImobiliareRo extends DataExtractor {
         }
 
         if (!imageUrls.length) {
-            throw new Error(`Cannot extract any image from listing.`);
+            throw new Error('Cannot extract any image from listing.');
         }
 
         return imageUrls;
