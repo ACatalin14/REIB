@@ -14,7 +14,7 @@ import { ImageHasher } from '../Helpers/ImageHasher.js';
 import { DbCollection } from '../DbLayer/DbCollection.js';
 import delay from 'delay';
 import { DbClient } from '../DbLayer/DbClient.js';
-import { consoleLog } from '../Helpers/Utils.js';
+import { consoleLog, tryConnectToDatabase, tryDisconnectFromDatabase } from '../Helpers/Utils.js';
 
 export class MainIndexSynchronizer {
     constructor() {
@@ -27,12 +27,7 @@ export class MainIndexSynchronizer {
 
         this.dbClient = new DbClient();
 
-        try {
-            consoleLog('[reib] Connecting to the database...');
-            await this.dbClient.connect();
-        } catch (error) {
-            consoleLog(error);
-            consoleLog('[reib] Cannot connect to Mongo DB.');
+        if (!(await tryConnectToDatabase(this.dbClient))) {
             return;
         }
 
@@ -41,12 +36,8 @@ export class MainIndexSynchronizer {
         // await this.syncIndexStoriaRo();
         // await this.syncIndexAnuntulRo();
 
-        try {
-            consoleLog('[reib] Disonnecting from the database...');
-            await this.dbClient.disconnect();
-        } catch (error) {
-            consoleLog(error);
-            consoleLog('[reib] Cannot disconnect from Mongo DB.');
+        if (!(await tryDisconnectFromDatabase(this.dbClient))) {
+            return;
         }
 
         consoleLog('[reib] Synchronization complete.');

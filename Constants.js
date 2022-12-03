@@ -2,6 +2,7 @@
 export const START_DELAY = parseInt((Math.random() * 10 * 60 * 1000) / 600000); // 10 minutes
 export const RESTING_DELAY_MIN = 1000; // 1 seconds
 export const RESTING_DELAY_MAX = 4000; // 4 seconds
+export const RETRY_IMAGES_FETCH_DELAY = 65000; // 65 seconds
 
 export const SYNCHRONIZATION_TIME = '14:00';
 
@@ -16,6 +17,7 @@ export const SOURCE_IMOBILIARE_RO = 'imobiliare.ro';
 export const SOURCE_OLX_RO = 'olx.ro';
 
 export const DB_COLLECTION_CLOSED_LISTINGS = 'closedListings';
+export const DB_COLLECTION_DISTINCT_LISTINGS = 'distinctListings';
 export const DB_COLLECTION_IMOBILIARE = 'imobiliareRoListings';
 export const DB_COLLECTION_OLX = 'olxRoListings';
 export const DB_COLLECTION_STORIA = 'storiaRoListings';
@@ -23,6 +25,7 @@ export const DB_COLLECTION_ANUNTUL = 'anuntulRoListings';
 export const DB_COLLECTION_SYNC_STATS = 'syncStats';
 export const DB_COLLECTION_MARKET_STATS = 'marketStats';
 export const DB_COLLECTION_CLOSED_LISTINGS_STATS = 'closedListingsStats';
+export const DB_COLLECTION_DISTINCT_LISTINGS_STATS = 'distinctListingsStats';
 
 // TODO: Update this array as the implementation goes on
 export const SOURCE_TO_DB_COLLECTION_MAP = {

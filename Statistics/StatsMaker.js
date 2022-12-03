@@ -3,9 +3,11 @@ import {
     DB_COLLECTION_MARKET_STATS,
     DB_COLLECTION_CLOSED_LISTINGS_STATS,
     DB_COLLECTION_CLOSED_LISTINGS,
+    DB_COLLECTION_DISTINCT_LISTINGS_STATS,
+    DB_COLLECTION_DISTINCT_LISTINGS,
 } from '../Constants.js';
 import { DbClient } from '../DbLayer/DbClient.js';
-import { consoleLog } from '../Helpers/Utils.js';
+import { tryConnectToDatabase, consoleLog, tryDisconnectFromDatabase } from '../Helpers/Utils.js';
 import { DbCollection } from '../DbLayer/DbCollection.js';
 import { Int32 } from 'mongodb';
 
@@ -25,35 +27,15 @@ export class StatsMaker {
 
         consoleLog('[stats] Computing end of month statistics started.');
 
-        await this.connectToDb();
+        await tryConnectToDatabase(this.dbClient, 'stats');
 
-        // await this.makeMarketStats();
+        await this.makeMarketStats();
         await this.makeClosedListingsStats();
-        await this.makeUniqueListingsStats();
+        await this.makeDistinctListingsStats();
 
-        await this.disconnectFromDb();
+        await tryDisconnectFromDatabase(this.dbClient, 'stats');
 
         consoleLog('[stats] Computing end of month statistics finished.');
-    }
-
-    async connectToDb() {
-        try {
-            consoleLog('[stats] Connecting to the database...');
-            await this.dbClient.connect();
-        } catch (error) {
-            consoleLog(error);
-            consoleLog('[stats] Cannot connect to Mongo DB.');
-        }
-    }
-
-    async disconnectFromDb() {
-        try {
-            consoleLog('[stats] Disonnecting from the database...');
-            await this.dbClient.disconnect();
-        } catch (error) {
-            consoleLog('[stats] Cannot disconnect from Mongo DB.');
-            consoleLog(error);
-        }
     }
 
     async makeMarketStats() {
@@ -76,42 +58,57 @@ export class StatsMaker {
     async makeClosedListingsStats() {
         consoleLog('[stats] Computing closed listings statistics...');
 
-        const closedListingsStatsCollection = new DbCollection(DB_COLLECTION_CLOSED_LISTINGS_STATS, this.dbClient);
         const closedListingsCollection = new DbCollection(DB_COLLECTION_CLOSED_LISTINGS, this.dbClient);
         const avgResults = [];
+        const pipelines = this.getAveragingPipelinesForMixedCollection();
 
-        avgResults.push(
-            ...(await closedListingsCollection.aggregate([
-                { $project: { _id: 0, price: 1, pricePerSurface: 1 } },
-                ...this.getStagesForAveragingListings(null, false),
-            ]))
-        );
+        for (let pipeline of pipelines) {
+            avgResults.push(...(await closedListingsCollection.aggregate(pipeline)));
+        }
 
-        avgResults.push(
-            ...(await closedListingsCollection.aggregate([
-                { $project: { _id: 0, price: 1, pricePerSurface: 1, roomsCount: 1 } },
-                ...this.getStagesForAveragingListings(null, true),
-            ]))
-        );
-
-        avgResults.push(
-            ...(await closedListingsCollection.aggregate([
-                { $project: { _id: 0, price: 1, pricePerSurface: 1, source: 1 } },
-                ...this.getStagesForAveragingListings(null, false, true),
-            ]))
-        );
-
-        avgResults.push(
-            ...(await closedListingsCollection.aggregate([
-                { $project: { _id: 0, price: 1, pricePerSurface: 1, source: 1, roomsCount: 1 } },
-                ...this.getStagesForAveragingListings(null, true, true),
-            ]))
-        );
-
+        const closedListingsStatsCollection = new DbCollection(DB_COLLECTION_CLOSED_LISTINGS_STATS, this.dbClient);
         await closedListingsStatsCollection.insertMany(avgResults);
     }
 
-    async makeUniqueListingsStats() {}
+    async makeDistinctListingsStats() {
+        consoleLog('[stats] Computing distinct listings statistics...');
+
+        const distinctListingsCollection = new DbCollection(DB_COLLECTION_DISTINCT_LISTINGS, this.dbClient);
+        const pipelines = this.getAveragingPipelinesForMixedCollection();
+        const avgResults = [];
+
+        for (let pipeline of pipelines) {
+            avgResults.push(...(await distinctListingsCollection.aggregate(pipeline)));
+        }
+
+        const distinctListingsStatsCollection = new DbCollection(DB_COLLECTION_DISTINCT_LISTINGS_STATS, this.dbClient);
+        await distinctListingsStatsCollection.insertMany(avgResults);
+    }
+
+    getAveragingPipelinesForMixedCollection() {
+        return [
+            // Pipeline with average globalized
+            [
+                { $project: { _id: 0, price: 1, pricePerSurface: 1 } },
+                ...this.getStagesForAveragingListings(null, false, false),
+            ],
+            // Pipeline with average grouped by roomsCount
+            [
+                { $project: { _id: 0, price: 1, pricePerSurface: 1, roomsCount: 1 } },
+                ...this.getStagesForAveragingListings(null, true, false),
+            ],
+            // Pipeline with average grouped by source
+            [
+                { $project: { _id: 0, price: 1, pricePerSurface: 1, source: 1 } },
+                ...this.getStagesForAveragingListings(null, false, true),
+            ],
+            // Pipeline with average grouped by roomsCount and by source
+            [
+                { $project: { _id: 0, price: 1, pricePerSurface: 1, roomsCount: 1, source: 1 } },
+                ...this.getStagesForAveragingListings(null, true, true),
+            ],
+        ];
+    }
 
     async getResultsForMarketCollections() {
         const collectionNames = Object.values(SOURCE_TO_DB_COLLECTION_MAP);

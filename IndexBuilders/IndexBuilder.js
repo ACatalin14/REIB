@@ -1,6 +1,7 @@
 import { consoleLog } from '../Helpers/Utils.js';
 import { load } from 'cheerio';
 import delay from 'delay';
+import { RETRY_IMAGES_FETCH_DELAY } from '../Constants.js';
 
 export class IndexBuilder {
     constructor(source, dbCollection, dataExtractor, smartRequester, imageHasher) {
@@ -53,8 +54,10 @@ export class IndexBuilder {
         try {
             listingData.images = await this.imageHasher.fetchBinHashesFromUrls(listingData.imageUrls);
         } catch (error) {
-            consoleLog(`[${this.source}] Cannot fetch all images due to possible bot detection. Retrying in 60 seconds...`);
-            await delay(60000);
+            consoleLog(
+                `[${this.source}] Cannot fetch all images due to possible bot detection. Retrying in ${RETRY_IMAGES_FETCH_DELAY} seconds...`
+            );
+            await delay(RETRY_IMAGES_FETCH_DELAY);
             listingData.images = await this.imageHasher.fetchBinHashesFromUrls(listingData.imageUrls);
         }
 

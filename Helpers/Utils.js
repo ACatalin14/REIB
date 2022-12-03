@@ -38,3 +38,27 @@ export function indexObjectsByKey(objects, key) {
 
     return map;
 }
+
+export async function tryConnectToDatabase(dbClient, logSource = 'reib') {
+    try {
+        consoleLog(`[${logSource}] Connecting to the database...`);
+        await dbClient.connect();
+        return true;
+    } catch (error) {
+        consoleLog(`[${logSource}] Cannot connect to Mongo DB.`);
+        consoleLog(error);
+        return false;
+    }
+}
+
+export async function tryDisconnectFromDatabase(dbClient, logSource = 'reib') {
+    try {
+        consoleLog(`[${logSource}] Disconnecting from the database...`);
+        await dbClient.disconnect();
+        return true;
+    } catch (error) {
+        consoleLog(`[${logSource}] Cannot disconnect from Mongo DB.`);
+        consoleLog(error);
+        return false;
+    }
+}
