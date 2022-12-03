@@ -173,7 +173,7 @@ export class DataExtractorImobiliareRo extends DataExtractor {
                     return;
                 }
 
-                if (dataSrc && dataSrc.indexOf('http' === 0)) {
+                if (dataSrc && dataSrc.indexOf('http') === 0) {
                     imageUrls.push(dataSrc);
                     return;
                 }
