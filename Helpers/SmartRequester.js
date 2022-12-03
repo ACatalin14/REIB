@@ -70,6 +70,23 @@ export class SmartRequester {
         }
     }
 
+    async fetchImagesFromUrls(urls) {
+        let promises = [];
+
+        for (let i = 0; i < urls.length; i++) {
+            promises.push(this.getImagePromise(urls[i]));
+        }
+
+        const results = await Promise.allSettled(promises);
+        const images = results.filter((result) => result.status === 'fulfilled').map((result) => result.value);
+
+        if (images.length < results.length / 2) {
+            throw new Error(`Cannot fetch half of images in listing (${images.length}/${results.length} fetched).`);
+        }
+
+        return images;
+    }
+
     async getImagePromise(url) {
         return Jimp.read({
             url: url,

@@ -2,6 +2,7 @@ import Jimp from 'jimp';
 import fs from 'fs';
 import { Binary } from 'mongodb';
 import { ImageHasher } from '../Helpers/ImageHasher.js';
+import { SimilarityDetector } from '../Helpers/SimilarityDetector.js';
 
 const SAMPLES_FOLDER = './Tests/SamplesResized/';
 const ORIGINAL_SAMPLE = 'original.png';
@@ -41,7 +42,8 @@ async function checkWithPerceptualHash() {
 
 async function checkWithDiffHash() {
     const testSamples = fs.readdirSync(SAMPLES_FOLDER).filter((sample) => sample !== ORIGINAL_SAMPLE);
-    const imageHasher = new ImageHasher(null);
+    const imageHasher = new ImageHasher();
+    const similarityDetector = new SimilarityDetector(imageHasher);
 
     const originalImage = await Jimp.read(SAMPLES_FOLDER + ORIGINAL_SAMPLE);
     const originalHash = imageHasher.dHash(originalImage);
@@ -50,14 +52,14 @@ async function checkWithDiffHash() {
     for (let sample of testSamples) {
         const image = await Jimp.read(SAMPLES_FOLDER + sample);
         const hash = imageHasher.dHash(image);
-        const similarityWithOriginal = imageHasher.getHashesSimilarity(originalHash, hash);
+        const similarityWithOriginal = similarityDetector.getHashesSimilarity(originalHash, hash);
         testSampleImages.push({ sample, hash, similarityWithOriginal });
     }
 
     testSampleImages.push({
         sample: ORIGINAL_SAMPLE,
         hash: originalHash,
-        similarityWithOriginal: imageHasher.getHashesSimilarity(originalHash, originalHash),
+        similarityWithOriginal: similarityDetector.getHashesSimilarity(originalHash, originalHash),
     });
 
     testSampleImages.sort((a, b) => b.similarityWithOriginal - a.similarityWithOriginal);

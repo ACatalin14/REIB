@@ -1,5 +1,3 @@
-// TODO: remove "/ 600000"
-export const START_DELAY = parseInt((Math.random() * 10 * 60 * 1000) / 600000); // 10 minutes
 export const RESTING_DELAY_MIN = 1000; // 1 seconds
 export const RESTING_DELAY_MAX = 4000; // 4 seconds
 export const RETRY_IMAGES_FETCH_DELAY = 65000; // 65 seconds

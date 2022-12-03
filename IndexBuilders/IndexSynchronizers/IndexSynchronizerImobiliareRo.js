@@ -1,6 +1,6 @@
 import { IndexSynchronizer } from './IndexSynchronizer.js';
-import { URL_XML_IMOBILIARE_LISTINGS_BUCHAREST } from '../Constants.js';
-import { consoleLog } from '../Helpers/Utils.js';
+import { URL_XML_IMOBILIARE_LISTINGS_BUCHAREST } from '../../Constants.js';
+import { consoleLog } from '../../Helpers/Utils.js';
 
 export class IndexSynchronizerImobiliareRo extends IndexSynchronizer {
     getListingIdFromUrl(url) {

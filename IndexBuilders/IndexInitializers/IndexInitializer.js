@@ -1,5 +1,5 @@
-import { IndexBuilder } from '../IndexBuilders/IndexBuilder.js';
-import { consoleLog, mapObjectsToValueOfKey } from '../Helpers/Utils.js';
+import { IndexBuilder } from '../IndexBuilder.js';
+import { consoleLog, mapObjectsToValueOfKey } from '../../Helpers/Utils.js';
 import delay from 'delay';
 
 export class IndexInitializer extends IndexBuilder {

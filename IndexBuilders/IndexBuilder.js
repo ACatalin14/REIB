@@ -52,13 +52,13 @@ export class IndexBuilder {
         const listingData = await this.fetchListingDetailsAndImageUrls(listingShortData, browserPage);
 
         try {
-            listingData.images = await this.imageHasher.fetchBinHashesFromUrls(listingData.imageUrls);
+            listingData.images = await this.fetchBinHashesFromUrls(listingData.imageUrls);
         } catch (error) {
             consoleLog(
                 `[${this.source}] Cannot fetch all images due to possible bot detection. Retrying in ${RETRY_IMAGES_FETCH_DELAY} seconds...`
             );
             await delay(RETRY_IMAGES_FETCH_DELAY);
-            listingData.images = await this.imageHasher.fetchBinHashesFromUrls(listingData.imageUrls);
+            listingData.images = await this.fetchBinHashesFromUrls(listingData.imageUrls);
         }
 
         delete listingData.imageUrls;
@@ -79,6 +79,11 @@ export class IndexBuilder {
             ...listingDetails,
             imageUrls: imageUrls,
         };
+    }
+
+    async fetchBinHashesFromUrls(urls) {
+        const images = this.smartRequester.fetchImagesFromUrls(urls);
+        return this.imageHasher.hashImages(images);
     }
 
     async fetchListingPage(listingShortData, browserPage) {
@@ -147,33 +152,5 @@ export class IndexBuilder {
         }
 
         return await this.getNewBrowserAndNewPage();
-    }
-
-    getOriginalListing(listing1, listing2) {
-        // Mainly look at the listings' prices, and select the cheaper one (this is what the buyers look into the most)
-        if (listing1.price < listing2.price) {
-            return listing1;
-        }
-
-        if (listing2.price < listing1.price) {
-            return listing2;
-        }
-
-        // When prices are equal, look at the surface, and select the bigger one by this criteria
-        if (listing1.surface > listing2.surface) {
-            return listing1;
-        }
-
-        if (listing2.surface > listing1.surface) {
-            return listing2;
-        }
-
-        // In the rare cases when both prices and surfaces are the same, select the one with more images
-        if (listing1.images.length >= listing2.images.length) {
-            // Also return the first listing when listings are truly equal
-            return listing1;
-        }
-
-        return listing2;
     }
 }

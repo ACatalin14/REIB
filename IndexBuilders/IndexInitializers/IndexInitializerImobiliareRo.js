@@ -1,6 +1,6 @@
-import { consoleLog } from '../Helpers/Utils.js';
+import { consoleLog } from '../../Helpers/Utils.js';
 import { IndexInitializer } from './IndexInitializer.js';
-import { URL_XML_IMOBILIARE_LISTINGS_BUCHAREST } from '../Constants.js';
+import { URL_XML_IMOBILIARE_LISTINGS_BUCHAREST } from '../../Constants.js';
 
 export class IndexInitializerImobiliareRo extends IndexInitializer {
     getListingIdFromUrl(url) {

@@ -1,7 +1,7 @@
 import express from 'express';
 import { checkListingsFromUrls } from './Tests/ListingsCheckerMethods.js';
-import { MainIndexInitializer } from './IndexInitializers/MainIndexInitializer.js';
-import { MainIndexSynchronizer } from './IndexSynchronizers/MainIndexSynchronizer.js';
+import { MainIndexInitializer } from './IndexBuilders/IndexInitializers/MainIndexInitializer.js';
+import { MainIndexSynchronizer } from './IndexBuilders/IndexSynchronizers/MainIndexSynchronizer.js';
 import { consoleLog } from './Helpers/Utils.js';
 import { ChromiumDownloader } from './Helpers/ChromiumDownloader.js';
 

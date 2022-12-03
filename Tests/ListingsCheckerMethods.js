@@ -6,6 +6,7 @@ import { DbClient } from '../DbLayer/DbClient.js';
 import { DbCollection } from '../DbLayer/DbCollection.js';
 import delay from 'delay';
 import { config } from 'dotenv';
+import { SimilarityDetector } from '../Helpers/SimilarityDetector.js';
 
 config(); // Use Environment Variables
 
@@ -24,10 +25,11 @@ const SAMPLE_URLS = TEST_URL_1.SAMPLE_URLS;
 
 const checkListingsFromUrls = async function () {
     const dataExtractor = new DataExtractorImobiliareRo();
+    const imageHasher = new ImageHasher();
+    const similarityDetector = new SimilarityDetector(imageHasher);
     const smartRequester = new SmartRequester(REFERRERS_IMOBILIARE_RO, REFERER_IMOBILIARE_RO, {
         authority: 'www.imobiliare.ro',
     });
-    const imageHasher = new ImageHasher(smartRequester);
 
     let browser = await smartRequester.getHeadlessBrowser();
     let browserPage = await browser.newPage();
@@ -51,7 +53,10 @@ const checkListingsFromUrls = async function () {
 
     sampleListings.forEach((sampleListing, index) => {
         console.log(`Original VS Sample ${index}:`);
-        const areSimilar = imageHasher.checkSimilarityForHashesLists(originalListing.images, sampleListing.images);
+        const areSimilar = similarityDetector.checkSimilarityForHashesLists(
+            originalListing.images,
+            sampleListing.images
+        );
         console.log(`Result: ${areSimilar ? 'SIMILAR' : 'NOT SIMILAR'}\n`);
     });
 
@@ -63,10 +68,8 @@ async function checkListingsFromDb() {
     await dbClient.connect();
 
     const dbImobiliare = new DbCollection(DB_COLLECTION_IMOBILIARE, dbClient);
-    const smartRequester = new SmartRequester(REFERRERS_IMOBILIARE_RO, REFERER_IMOBILIARE_RO, {
-        authority: 'www.imobiliare.ro',
-    });
-    const imageHasher = new ImageHasher(smartRequester);
+    const imageHasher = new ImageHasher();
+    const similarityDetector = new SimilarityDetector(imageHasher);
 
     const projection = { projection: { _id: 0, id: 1, images: 1, roomsCount: 1 } };
     // const allListings1 = await dbImobiliare.find({ images: { $size: 1 } }, projection);
@@ -86,7 +89,7 @@ async function checkListingsFromDb() {
         for (let j = i + 1; j < allListings.length; j++) {
             const areSimilar =
                 allListings[i].roomsCount === allListings[j].roomsCount &&
-                imageHasher.checkSimilarityForHashesLists(allListings[i].images, allListings[j].images);
+                similarityDetector.checkSimilarityForHashesLists(allListings[i].images, allListings[j].images);
             if (areSimilar) {
                 console.log('Pair', ++pairsCount, `[${i}, ${j}]`);
                 console.log(allListings[i].id);
@@ -102,8 +105,9 @@ async function fetchListingFromUrl(url, browserPage, smartRequester, dataExtract
     const htmlResponse = await smartRequester.getPageFromUrl(browserPage, url);
     dataExtractor.setDataSource(htmlResponse);
     const imageUrls = await dataExtractor.extractImageUrls(browserPage);
-    const images = await imageHasher.fetchBinHashesFromUrls(imageUrls);
-    return { id: url, images };
+    const images = smartRequester.fetchImagesFromUrls(imageUrls);
+    const imageHashes = imageHasher.hashImages(images);
+    return { images: imageHashes };
 }
 
 export { checkListingsFromUrls, checkListingsFromDb };

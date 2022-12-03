@@ -1,11 +1,21 @@
-import { IndexBuilder } from '../IndexBuilders/IndexBuilder.js';
-import { consoleLog, indexObjectsByKey, mapObjectsToValueOfKey } from '../Helpers/Utils.js';
+import { IndexBuilder } from '../IndexBuilder.js';
+import { consoleLog, indexObjectsByKey, mapObjectsToValueOfKey } from '../../Helpers/Utils.js';
 import delay from 'delay';
-import { SYNCHRONIZATION_TIME } from '../Constants.js';
+import { SYNCHRONIZATION_TIME } from '../../Constants.js';
 
 export class IndexSynchronizer extends IndexBuilder {
-    constructor(source, dbCollection, dataExtractor, smartRequester, imageHasher, dbClosedListings, dbSyncStats) {
+    constructor(
+        source,
+        dbCollection,
+        dataExtractor,
+        smartRequester,
+        imageHasher,
+        similarityDetector,
+        dbClosedListings,
+        dbSyncStats
+    ) {
         super(source, dbCollection, dataExtractor, smartRequester, imageHasher);
+        this.similarityDetector = similarityDetector;
         this.dbClosedListings = dbClosedListings;
         this.dbSyncStats = dbSyncStats;
         this.dbClosedListingsRecords = [];
@@ -41,6 +51,8 @@ export class IndexSynchronizer extends IndexBuilder {
 
         consoleLog(`[${this.source}] Synchronizing closed listings...`);
 
+        this.dbClosedListingsRecords = await this.dbClosedListings.find();
+
         await this.handleDeletedListings(deletedListings, listingsToBeClosed);
 
         const dbOperations = [this.dbMarketListings.deleteMany({ id: { $in: deletedListingsIds } })];
@@ -63,25 +75,17 @@ export class IndexSynchronizer extends IndexBuilder {
             if (!similarClosedListing) {
                 const closedListing = { ...deletedListings[i], closedDate: new Date(), source: this.source };
                 listingsToBeClosed.push(closedListing);
+                this.dbClosedListingsRecords.push(closedListing);
                 continue;
             }
 
-            await this.handleDeletedListingHavingSimilarClosedListing(
-                deletedListings[i],
-                similarClosedListing,
-                listingsToBeClosed
-            );
+            await this.handleDeletedListingHavingSimilarClosedListing(deletedListings[i], similarClosedListing);
         }
     }
 
     async fetchSimilarClosedListing(listing) {
-        if (!this.dbClosedListingsRecords.length) {
-            // Perform only once the query on the db for getting all closed listings
-            this.dbClosedListingsRecords = await this.dbClosedListings.find({});
-        }
-
         for (let i = 0; i < this.dbClosedListingsRecords.length; i++) {
-            if (this.checkListingsAreSimilar(listing, this.dbClosedListingsRecords[i])) {
+            if (this.similarityDetector.checkListingsAreSimilar(listing, this.dbClosedListingsRecords[i])) {
                 return this.dbClosedListingsRecords[i];
             }
         }
@@ -89,18 +93,8 @@ export class IndexSynchronizer extends IndexBuilder {
         return null;
     }
 
-    checkListingsAreSimilar(listing1, listing2) {
-        // Add safe guard for number of rooms. If different count of rooms, there is no need to look at the images
-        if (listing1.roomsCount !== listing2.roomsCount) {
-            return false;
-        }
-
-        // Apartments have same number of rooms, should check their images now
-        return this.imageHasher.checkSimilarityForHashesLists(listing1.images, listing2.images);
-    }
-
     async handleDeletedListingHavingSimilarClosedListing(deletedListing, similarClosedListing) {
-        const originalListing = this.getOriginalListing(similarClosedListing, deletedListing);
+        const originalListing = this.similarityDetector.getOriginalListing(similarClosedListing, deletedListing);
 
         if (originalListing.id === similarClosedListing.id) {
             return;
