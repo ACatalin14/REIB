@@ -74,7 +74,7 @@ export class ImageHasher {
         const images = results.filter((result) => result.status === 'fulfilled').map((result) => result.value);
 
         if (images.length < results.length / 2) {
-            throw new Error('Cannot fetch half of images in listing.');
+            throw new Error(`Cannot fetch half of images in listing (${images.length}/${results.length} fetched).`);
         }
 
         return images.map((image) => this.dHash(image));
