@@ -104,17 +104,14 @@ export class DataExtractorImobiliareRo extends DataExtractor {
             '#galerie_detalii > div.swiper.main_slider > div.swiper-wrapper > div > a > img.front_image'
         );
 
-        const imageUrls = [];
-
-        const [imageUrlsGalerie, imageUrlsSchite] = await Promise.all([
-            this.extractImageUrlsFromIframe('#modal-galerie', browserPage),
-            this.extractImageUrlsFromIframe('#modal-galerie_schite', browserPage)
-        ]);
-
-        imageUrls.push(...imageUrlsGalerie, ...imageUrlsSchite);
+        let imageUrls = await this.extractImageUrlsFromIframe('#modal-galerie', browserPage);
 
         if (!imageUrls.length) {
-            throw new Error(`[${this.source}] Cannot extract any image from listing.`);
+            imageUrls = await this.extractImageUrlsFromIframe('#modal-galerie_schite', browserPage);
+        }
+
+        if (!imageUrls.length) {
+            throw new Error(`Cannot extract any image from listing.`);
         }
 
         return imageUrls;
@@ -122,9 +119,9 @@ export class DataExtractorImobiliareRo extends DataExtractor {
 
     async extractImageUrlsFromIframe(iframeId, browserPage) {
         try {
-            const iframeElementHandle = await browserPage.waitForSelector(iframeId, { timeout: 2000 });
+            const iframeElementHandle = await browserPage.waitForSelector(iframeId, { timeout: 3000 });
             const frame = await iframeElementHandle.contentFrame();
-            await frame.waitForSelector('#slider_imagini > div.swipe-wrap > div', { timeout: 2000 });
+            await frame.waitForSelector('#slider_imagini > div.swipe-wrap > div', { timeout: 3000 });
             const html = await frame.content();
 
             const $ = load(html);
