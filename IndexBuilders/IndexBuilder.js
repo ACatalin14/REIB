@@ -87,7 +87,7 @@ export class IndexBuilder {
 
     getListingDetailsWithExtractor(listingShortData) {
         if (!this.dataExtractor.hasListingDetails()) {
-            throw new Error(`[${this.source}] Cannot find all listing details at: ${listingShortData.url}.`);
+            throw new Error('Cannot find all listing details.');
         }
 
         const price = this.dataExtractor.extractPrice();
