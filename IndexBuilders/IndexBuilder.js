@@ -50,7 +50,13 @@ export class IndexBuilder {
     async fetchListingDataFromPage(listingShortData, browserPage) {
         const listingData = await this.fetchListingDetailsAndImageUrls(listingShortData, browserPage);
 
-        listingData.images = await this.imageHasher.fetchBinHashesFromUrls(listingData.imageUrls);
+        try {
+            listingData.images = await this.imageHasher.fetchBinHashesFromUrls(listingData.imageUrls);
+        } catch (error) {
+            consoleLog('Cannot fetch all images due to possible bot detection. Retrying in 60 seconds...');
+            await delay(60000);
+            listingData.images = await this.imageHasher.fetchBinHashesFromUrls(listingData.imageUrls);
+        }
 
         delete listingData.imageUrls;
 
