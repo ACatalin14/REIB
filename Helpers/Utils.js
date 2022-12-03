@@ -1,9 +1,18 @@
 import fs from 'fs';
 
 export function consoleLog(...logs) {
-    const timeFormatting = { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' };
+    const timeFormatting = {
+        hour12: false,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+    };
+
     const currentDate = new Date();
-    const timestamp = '[' + currentDate.toLocaleTimeString('en-US', timeFormatting) + ']';
+    const timestamp = '[' + currentDate.toLocaleTimeString('ro-RO', timeFormatting) + ']';
     const content = timestamp + [...logs].join(' ');
 
     console.log(content);

@@ -1,5 +1,6 @@
 import { DataExtractor } from './DataExtractor.js';
 import { load } from 'cheerio';
+import { LISTING_PRICE_MIN_THRESHOLD } from '../Constants.js';
 
 export class DataExtractorImobiliareRo extends DataExtractor {
     setDataSource(html) {
@@ -26,11 +27,21 @@ export class DataExtractorImobiliareRo extends DataExtractor {
         // Check if retrieved page does contain listing details. If not found, it is not
         // a valid listing page (search page with multiple results, 404 not found page, etc.)
         return (
-            this.dataLayerText.indexOf('propertyPrice') !== -1 &&
+            this.hasPriceDetails() &&
             this.dataLayerText.indexOf('propertySurface') !== -1 &&
             this.hasRoomsCountDetails() &&
             !this.hasExpiredMessageBox()
         );
+    }
+
+    hasPriceDetails() {
+        if (this.dataLayerText.indexOf('propertyPrice') === -1) {
+            return false;
+        }
+
+        const price = this.extractPrice();
+
+        return price >= LISTING_PRICE_MIN_THRESHOLD;
     }
 
     hasRoomsCountDetails() {

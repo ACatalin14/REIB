@@ -69,3 +69,5 @@ export const REFERRERS_IMOBILIARE_RO = [
     'https://www.imoradar24.ro/',
     'https://www.argus.me/',
 ];
+
+export const LISTING_PRICE_MIN_THRESHOLD = 10000; // Minimum amount of Euros a listing must have to be saved in database
