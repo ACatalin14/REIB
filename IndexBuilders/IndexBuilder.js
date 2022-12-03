@@ -53,7 +53,7 @@ export class IndexBuilder {
         try {
             listingData.images = await this.imageHasher.fetchBinHashesFromUrls(listingData.imageUrls);
         } catch (error) {
-            consoleLog('Cannot fetch all images due to possible bot detection. Retrying in 60 seconds...');
+            consoleLog(`[${this.source}] Cannot fetch all images due to possible bot detection. Retrying in 60 seconds...`);
             await delay(60000);
             listingData.images = await this.imageHasher.fetchBinHashesFromUrls(listingData.imageUrls);
         }

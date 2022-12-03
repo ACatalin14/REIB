@@ -12,7 +12,7 @@ export function consoleLog(...logs) {
     };
 
     const currentDate = new Date();
-    const timestamp = '[' + currentDate.toLocaleTimeString('ro-RO', timeFormatting) + ']';
+    const timestamp = '[' + currentDate.toLocaleTimeString('ro-RO', timeFormatting) + '] ';
     const content = timestamp + [...logs].join(' ');
 
     console.log(content);
