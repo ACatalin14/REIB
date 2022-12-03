@@ -119,9 +119,9 @@ export class DataExtractorImobiliareRo extends DataExtractor {
 
     async extractImageUrlsFromIframe(iframeId, browserPage) {
         try {
-            const iframeElementHandle = await browserPage.waitForSelector(iframeId, { timeout: 3000 });
+            const iframeElementHandle = await browserPage.waitForSelector(iframeId, { timeout: 5000 });
             const frame = await iframeElementHandle.contentFrame();
-            await frame.waitForSelector('#slider_imagini > div.swipe-wrap > div', { timeout: 3000 });
+            await frame.waitForSelector('#slider_imagini > div.swipe-wrap > div', { timeout: 5000 });
             const html = await frame.content();
 
             const $ = load(html);

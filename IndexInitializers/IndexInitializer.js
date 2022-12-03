@@ -43,10 +43,9 @@ export class IndexInitializer extends IndexBuilder {
                 consoleLog(`[${this.source}] Fetching listing [${i + 1}] from: ${xmlListings[i].url}`);
                 listingData = await this.fetchListingDataFromPage(xmlListings[i], browserPage);
             } catch (error) {
-                consoleLog(`[${this.source}] Cannot fetch listing data from: ${xmlListings[i].url}`);
+                consoleLog(`[${this.source}] Cannot fetch listing data.`);
                 consoleLog(error);
-                await browser.close();
-                [browser, browserPage] = await this.getNewBrowserAndNewPage();
+                [browser, browserPage] = await this.getReloadedBrowser(browser);
                 await this.dbMarketListings.deleteOne({ id: xmlListings[i].id });
                 continue;
             }

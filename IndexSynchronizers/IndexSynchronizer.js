@@ -158,10 +158,9 @@ export class IndexSynchronizer extends IndexBuilder {
                     await delay(this.smartRequester.getRandomRestingDelay());
                 }
             } catch (error) {
-                consoleLog(`[${this.source}] Cannot process XML listing from: ${xmlListings[i].url}`);
+                consoleLog(`[${this.source}] Cannot process XML listing.`);
                 consoleLog(error);
-                await browser.close();
-                [browser, browserPage] = await this.getNewBrowserAndNewPage();
+                [browser, browserPage] = await this.getReloadedBrowser(browser);
             }
         }
     }

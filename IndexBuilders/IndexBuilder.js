@@ -1,5 +1,6 @@
 import { consoleLog } from '../Helpers/Utils.js';
 import { load } from 'cheerio';
+import delay from 'delay';
 
 export class IndexBuilder {
     constructor(source, dbCollection, dataExtractor, smartRequester, imageHasher) {
@@ -122,6 +123,21 @@ export class IndexBuilder {
             consoleLog(`[${this.source}] Cannot launch headless browser.`);
             throw error;
         }
+    }
+
+    async getReloadedBrowser(browser) {
+        consoleLog(`[${this.source}] Closing browser and opening new one...`);
+
+        try {
+            await browser.close();
+        } catch (error) {
+            consoleLog(`[${this.source}] Cannot close correctly old browser.`);
+            consoleLog(error);
+        } finally {
+            await delay(1000);
+        }
+
+        return await this.getNewBrowserAndNewPage();
     }
 
     getOriginalListing(listing1, listing2) {
