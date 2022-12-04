@@ -23,6 +23,7 @@ export class IndexBuilder {
             consoleLog(`[${this.source}] Fetching XML from: ${xmlUrl}`);
             response = await this.smartRequester.get(xmlUrl);
         } catch (error) {
+            // TODO: Retry everywhere by waiting 1 second and doing again the request / mongo query / etc.
             consoleLog(`[${this.source}] Error while fetching XML from: ${xmlUrl}.`);
             throw error;
         }
@@ -72,12 +73,14 @@ export class IndexBuilder {
         let [browser, browserPage] = await this.getNewBrowserAndNewPage();
 
         try {
+            consoleLog(`[${this.source}] Fetching listing page...`);
             const listingPageHtml = await this.fetchListingPage(listingShortData, browserPage);
 
             this.dataExtractor.setDataSource(listingPageHtml);
 
             const listingDetails = this.getListingDetailsWithExtractor(listingShortData);
 
+            consoleLog(`[${this.source}] Fetching listing image urls...`);
             const imageUrls = await this.fetchListingImageUrls(listingShortData, browserPage);
 
             return {
@@ -85,7 +88,7 @@ export class IndexBuilder {
                 imageUrls: imageUrls,
             };
         } catch (error) {
-            consoleLog(`[${this.source}] Cannot fetch listing details and image urls from: ${listingShortData.url}.`);
+            consoleLog(`[${this.source}] Cannot fetch listing details and image urls.`);
             throw error;
         } finally {
             await this.closeBrowser(browser);
@@ -93,7 +96,9 @@ export class IndexBuilder {
     }
 
     async fetchBinHashesFromUrls(urls) {
+        consoleLog(`[${this.source}] Fetching images from urls...`);
         const images = await this.smartRequester.fetchImagesFromUrls(urls);
+        consoleLog(`[${this.source}] Hashing images...`);
         return this.imageHasher.hashImages(images);
     }
 
@@ -118,6 +123,7 @@ export class IndexBuilder {
         const price = this.dataExtractor.extractPrice();
         const surface = this.dataExtractor.extractSurface();
         const roomsCount = this.dataExtractor.extractRoomsCount();
+        const constructionYear = this.dataExtractor.extractConstructionYear();
 
         return {
             id: listingShortData.id,
@@ -126,6 +132,7 @@ export class IndexBuilder {
             price: price,
             surface: surface,
             pricePerSurface: Math.round((price / surface) * 100) / 100,
+            constructionYear: constructionYear,
         };
     }
 
@@ -133,7 +140,7 @@ export class IndexBuilder {
         try {
             return await this.dataExtractor.extractImageUrls(browserPage);
         } catch (error) {
-            consoleLog(`[${this.source}] Cannot extract image URL's from listing: ${listingShortData.url}.`);
+            consoleLog(`[${this.source}] Cannot extract image URL's from listing.`);
             throw error;
         }
     }

@@ -1,6 +1,7 @@
 import { DataExtractor } from './DataExtractor.js';
 import { load } from 'cheerio';
 import { LISTING_PRICE_MIN_THRESHOLD } from '../Constants.js';
+import { consoleLog } from '../Helpers/Utils.js';
 
 export class DataExtractorImobiliareRo extends DataExtractor {
     setDataSource(html) {
@@ -141,6 +142,13 @@ export class DataExtractorImobiliareRo extends DataExtractor {
         return Number(surfaceText);
     }
 
+    extractConstructionYear() {
+        const yearStartPos = this.dataLayerText.indexOf('propertyConstructionYear') + 24 + 4;
+        const yearLength = this.dataLayerText.substring(yearStartPos).indexOf("'");
+
+        return this.dataLayerText.substring(yearStartPos, yearStartPos + yearLength);
+    }
+
     async extractImageUrls(browserPage) {
         if (this.hasNoImagesOfficially()) {
             return [];
@@ -157,7 +165,7 @@ export class DataExtractorImobiliareRo extends DataExtractor {
         }
 
         if (!imageUrls.length) {
-            throw new Error('Cannot extract any image from listing.');
+            throw new Error('Cannot extract any image url from listing.');
         }
 
         return imageUrls;
@@ -165,6 +173,8 @@ export class DataExtractorImobiliareRo extends DataExtractor {
 
     async extractImageUrlsFromIframe(iframeId, browserPage) {
         try {
+            consoleLog(`[${this.source}] Extracting image urls from iframe ${iframeId}...`);
+
             const iframeElementHandle = await browserPage.waitForSelector(iframeId, { timeout: 5000 });
             const frame = await iframeElementHandle.contentFrame();
             await frame.waitForSelector('#slider_imagini > div.swipe-wrap > div', { timeout: 5000 });
@@ -172,6 +182,8 @@ export class DataExtractorImobiliareRo extends DataExtractor {
 
             const $ = load(html);
             let imageUrls = [];
+
+            consoleLog(`[${this.source}] Traversing divs with links...`);
 
             $('#slider_imagini > div.swipe-wrap > div').each((index, div) => {
                 const img = $('a > img', div);
@@ -196,6 +208,8 @@ export class DataExtractorImobiliareRo extends DataExtractor {
 
             // Delete the last image since it is the same with the first image
             imageUrls.splice(imageUrls.length - 1, 1);
+
+            consoleLog(`[${this.source}] Found ${imageUrls.length} images to fetch.`);
 
             return imageUrls;
         } catch (error) {

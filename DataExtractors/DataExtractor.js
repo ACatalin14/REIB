@@ -1,4 +1,8 @@
 export class DataExtractor {
+    constructor() {
+        this.source = 'data-extractor';
+    }
+
     setDataSource(dataSource) {
         // To be implemented
     }
@@ -16,6 +20,10 @@ export class DataExtractor {
     }
 
     extractSurface() {
+        // To be implemented
+    }
+
+    extractConstructionYear() {
         // To be implemented
     }
 
