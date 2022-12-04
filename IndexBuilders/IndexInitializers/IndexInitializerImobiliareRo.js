@@ -16,13 +16,7 @@ export class IndexInitializerImobiliareRo extends IndexInitializer {
             const xmlListingsToInit = await this.getXmlListingsToInit(xmlListings);
             await this.prepareListingsToInit(xmlListingsToInit);
 
-            let browser, browserPage;
-
-            [browser, browserPage] = await this.getNewBrowserAndNewPage();
-
-            await this.handleXmlListingsToInitialize(xmlListingsToInit, browser, browserPage);
-
-            await browser.close();
+            await this.handleXmlListingsToInitialize(xmlListingsToInit);
 
             consoleLog(`[${this.source}] Initialization complete.`);
         } catch (error) {

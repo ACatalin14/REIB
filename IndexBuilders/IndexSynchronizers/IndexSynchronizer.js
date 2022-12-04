@@ -115,11 +115,7 @@ export class IndexSynchronizer extends IndexBuilder {
 
         consoleLog(`[${this.source}] Synchronizing current market listings...`);
 
-        let [browser, browserPage] = await this.getNewBrowserAndNewPage();
-
-        await this.handleXmlListingsToSynchronize(xmlListings, browser, browserPage, listingsToBeAdded);
-
-        await browser.close();
+        await this.handleXmlListingsToSynchronize(xmlListings, listingsToBeAdded);
 
         if (listingsToBeAdded.length > 0) {
             this.listingsToBeAddedCount = listingsToBeAdded.length;
@@ -129,7 +125,7 @@ export class IndexSynchronizer extends IndexBuilder {
         consoleLog(`[${this.source}] Synchronized current market listings.`);
     }
 
-    async handleXmlListingsToSynchronize(xmlListings, browser, browserPage, listingsToBeAdded) {
+    async handleXmlListingsToSynchronize(xmlListings, listingsToBeAdded) {
         const dbMarketListingsRecords = await this.dbMarketListings.find({}, { _id: 0, id: 1, lastModified: 1 });
         const dbMarketListingsMap = indexObjectsByKey(dbMarketListingsRecords, 'id');
         const dbMarketListingsIds = new Set(Object.keys(dbMarketListingsMap));
@@ -139,7 +135,7 @@ export class IndexSynchronizer extends IndexBuilder {
                 const listingId = xmlListings[i].id;
                 const isOnMarket = dbMarketListingsIds.has(listingId);
                 if (!isOnMarket) {
-                    await this.createMarketListing(xmlListings[i], browserPage, listingsToBeAdded);
+                    await this.createMarketListing(xmlListings[i], listingsToBeAdded);
                     consoleLog(`[${this.source}] Fetched and added listing to database. Waiting...`);
                     await delay(this.smartRequester.getRandomRestingDelay());
                     continue;
@@ -147,24 +143,23 @@ export class IndexSynchronizer extends IndexBuilder {
 
                 const marketListing = dbMarketListingsMap[listingId];
                 if (marketListing.lastModified < xmlListings[i].lastModified) {
-                    await this.updateMarketListing(xmlListings[i], browserPage);
+                    await this.updateMarketListing(xmlListings[i]);
                     consoleLog(`[${this.source}] Fetched and updated listing in database. Waiting...`);
                     await delay(this.smartRequester.getRandomRestingDelay());
                 }
             } catch (error) {
                 consoleLog(`[${this.source}] Cannot process XML listing.`);
                 consoleLog(error);
-                [browser, browserPage] = await this.getReloadedBrowser(browser);
             }
         }
     }
 
-    async createMarketListing(listingShortData, browserPage, newMarketListings) {
+    async createMarketListing(listingShortData, newMarketListings) {
         let newListingData;
 
         try {
             consoleLog(`[${this.source}] Fetching to create listing from: ${listingShortData.url}`);
-            newListingData = await this.fetchListingDataFromPage(listingShortData, browserPage);
+            newListingData = await this.fetchListingDataFromPage(listingShortData);
         } catch (error) {
             consoleLog(`[${this.source}] Cannot fetch new listing data from: ${listingShortData.url}`);
             throw error;
@@ -173,12 +168,12 @@ export class IndexSynchronizer extends IndexBuilder {
         newMarketListings.push(newListingData);
     }
 
-    async updateMarketListing(listingShortData, browserPage) {
+    async updateMarketListing(listingShortData) {
         let listingData;
 
         try {
             consoleLog(`[${this.source}] Fetching to update listing from: ${listingShortData.url}`);
-            listingData = await this.fetchListingDataFromPage(listingShortData, browserPage);
+            listingData = await this.fetchListingDataFromPage(listingShortData);
         } catch (error) {
             consoleLog(`[${this.source}] Cannot fetch updated listing data from: ${listingShortData.url}`);
             throw error;

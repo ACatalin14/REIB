@@ -35,17 +35,16 @@ export class IndexInitializer extends IndexBuilder {
         consoleLog(`[${this.source}] Listings prepared for initialization.`);
     }
 
-    async handleXmlListingsToInitialize(xmlListings, browser, browserPage) {
+    async handleXmlListingsToInitialize(xmlListings) {
         for (let i = 0; i < xmlListings.length; i++) {
             let listingData;
 
             try {
                 consoleLog(`[${this.source}] Fetching listing [${i + 1}] from: ${xmlListings[i].url}`);
-                listingData = await this.fetchListingDataFromPage(xmlListings[i], browserPage);
+                listingData = await this.fetchListingDataFromPage(xmlListings[i]);
             } catch (error) {
                 consoleLog(`[${this.source}] Cannot fetch listing data.`);
                 consoleLog(error);
-                [browser, browserPage] = await this.getReloadedBrowser(browser);
                 await this.dbMarketListings.deleteOne({ id: xmlListings[i].id });
                 continue;
             }

@@ -48,8 +48,8 @@ export class IndexBuilder {
         return xmlListings;
     }
 
-    async fetchListingDataFromPage(listingShortData, browserPage) {
-        const listingData = await this.fetchListingDetailsAndImageUrls(listingShortData, browserPage);
+    async fetchListingDataFromPage(listingShortData) {
+        const listingData = await this.fetchListingDetailsAndImageUrls(listingShortData);
 
         try {
             listingData.images = await this.fetchBinHashesFromUrls(listingData.imageUrls);
@@ -68,7 +68,9 @@ export class IndexBuilder {
         return listingData;
     }
 
-    async fetchListingDetailsAndImageUrls(listingShortData, browserPage) {
+    async fetchListingDetailsAndImageUrls(listingShortData) {
+        let [browser, browserPage] = await this.getNewBrowserAndNewPage();
+
         const listingPageHtml = await this.fetchListingPage(listingShortData, browserPage);
 
         this.dataExtractor.setDataSource(listingPageHtml);
@@ -76,6 +78,8 @@ export class IndexBuilder {
         const listingDetails = this.getListingDetailsWithExtractor(listingShortData);
 
         const imageUrls = await this.fetchListingImageUrls(listingShortData, browserPage);
+
+        await this.closeBrowser(browser);
 
         return {
             ...listingDetails,
@@ -136,23 +140,18 @@ export class IndexBuilder {
 
             return [browser, browserPage];
         } catch (error) {
-            consoleLog(`[${this.source}] Cannot launch headless browser.`);
-            throw error;
+            consoleLog(`[${this.source}] Cannot launch headless browser. Retrying in 1 second...`);
+            await delay(1000);
+            return await this.getNewBrowserAndNewPage();
         }
     }
 
-    async getReloadedBrowser(browser) {
-        consoleLog(`[${this.source}] Closing browser and opening new one...`);
-
+    async closeBrowser(browser) {
         try {
             await browser.close();
         } catch (error) {
-            consoleLog(`[${this.source}] Cannot close correctly old browser.`);
+            consoleLog(`[${this.source}] Cannot close headless browser. Moving on...`);
             consoleLog(error);
-        } finally {
-            await delay(1000);
         }
-
-        return await this.getNewBrowserAndNewPage();
     }
 }
