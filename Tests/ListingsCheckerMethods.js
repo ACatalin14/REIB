@@ -105,7 +105,7 @@ async function fetchListingFromUrl(url, browserPage, smartRequester, dataExtract
     const htmlResponse = await smartRequester.getPageFromUrl(browserPage, url);
     dataExtractor.setDataSource(htmlResponse);
     const imageUrls = await dataExtractor.extractImageUrls(browserPage);
-    const images = smartRequester.fetchImagesFromUrls(imageUrls);
+    const images = await smartRequester.fetchImagesFromUrls(imageUrls);
     const imageHashes = imageHasher.hashImages(images);
     return { images: imageHashes };
 }

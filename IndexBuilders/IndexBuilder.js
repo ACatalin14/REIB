@@ -55,7 +55,9 @@ export class IndexBuilder {
             listingData.images = await this.fetchBinHashesFromUrls(listingData.imageUrls);
         } catch (error) {
             consoleLog(
-                `[${this.source}] Cannot fetch all images due to possible bot detection. Retrying in ${RETRY_IMAGES_FETCH_DELAY} seconds...`
+                `[${this.source}] Cannot fetch all images due to possible bot detection. Retrying in ${
+                    RETRY_IMAGES_FETCH_DELAY / 1000
+                } seconds...`
             );
             await delay(RETRY_IMAGES_FETCH_DELAY);
             listingData.images = await this.fetchBinHashesFromUrls(listingData.imageUrls);
@@ -82,7 +84,7 @@ export class IndexBuilder {
     }
 
     async fetchBinHashesFromUrls(urls) {
-        const images = this.smartRequester.fetchImagesFromUrls(urls);
+        const images = await this.smartRequester.fetchImagesFromUrls(urls);
         return this.imageHasher.hashImages(images);
     }
 
