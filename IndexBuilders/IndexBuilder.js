@@ -71,20 +71,25 @@ export class IndexBuilder {
     async fetchListingDetailsAndImageUrls(listingShortData) {
         let [browser, browserPage] = await this.getNewBrowserAndNewPage();
 
-        const listingPageHtml = await this.fetchListingPage(listingShortData, browserPage);
+        try {
+            const listingPageHtml = await this.fetchListingPage(listingShortData, browserPage);
 
-        this.dataExtractor.setDataSource(listingPageHtml);
+            this.dataExtractor.setDataSource(listingPageHtml);
 
-        const listingDetails = this.getListingDetailsWithExtractor(listingShortData);
+            const listingDetails = this.getListingDetailsWithExtractor(listingShortData);
 
-        const imageUrls = await this.fetchListingImageUrls(listingShortData, browserPage);
+            const imageUrls = await this.fetchListingImageUrls(listingShortData, browserPage);
 
-        await this.closeBrowser(browser);
-
-        return {
-            ...listingDetails,
-            imageUrls: imageUrls,
-        };
+            return {
+                ...listingDetails,
+                imageUrls: imageUrls,
+            };
+        } catch (error) {
+            consoleLog(`[${this.source}] Cannot fetch listing details and image urls from: ${listingShortData.url}.`);
+            throw error;
+        } finally {
+            await this.closeBrowser(browser);
+        }
     }
 
     async fetchBinHashesFromUrls(urls) {
