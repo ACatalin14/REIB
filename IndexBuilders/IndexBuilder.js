@@ -127,6 +127,7 @@ export class IndexBuilder {
 
         return {
             id: listingShortData.id,
+            url: listingShortData.url,
             lastModified: new Date(listingShortData.lastModified),
             roomsCount: roomsCount,
             price: price,
