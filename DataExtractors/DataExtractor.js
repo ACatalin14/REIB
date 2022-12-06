@@ -7,7 +7,7 @@ export class DataExtractor {
         // To be implemented
     }
 
-    hasListingDetails() {
+    hasValidListingDetails() {
         // To be implemented
     }
 

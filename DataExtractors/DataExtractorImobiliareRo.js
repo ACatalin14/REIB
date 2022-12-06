@@ -1,6 +1,10 @@
 import { DataExtractor } from './DataExtractor.js';
 import { load } from 'cheerio';
-import { LISTING_PRICE_MIN_THRESHOLD } from '../Constants.js';
+import {
+    LISTING_PRICE_MAX_SUS_THRESHOLD,
+    LISTING_PRICE_MIN_THRESHOLD,
+    LISTING_ROOMS_COUNT_SUS_THRESHOLD,
+} from '../Constants.js';
 import { consoleLog } from '../Helpers/Utils.js';
 
 export class DataExtractorImobiliareRo extends DataExtractor {
@@ -24,15 +28,30 @@ export class DataExtractorImobiliareRo extends DataExtractor {
         this.html = html;
     }
 
-    hasListingDetails() {
+    hasValidListingDetails() {
         // Check if retrieved page does contain listing details. If not found, it is not
         // a valid listing page (search page with multiple results, 404 not found page, etc.)
-        return (
-            this.hasPriceDetails() &&
-            this.dataLayerText.indexOf('propertySurface') !== -1 &&
-            this.hasRoomsCountDetails() &&
-            !this.hasExpiredMessageBox()
-        );
+        if (
+            !this.hasPriceDetails() ||
+            !this.hasSurfaceDetails() ||
+            !this.hasRoomsCountDetails() ||
+            this.hasExpiredMessageBox()
+        ) {
+            return false;
+        }
+
+        const price = this.extractPrice();
+        const roomsCount = this.extractRoomsCount();
+
+        if (price < LISTING_PRICE_MIN_THRESHOLD) {
+            return false;
+        }
+
+        if (price > LISTING_PRICE_MAX_SUS_THRESHOLD && roomsCount < LISTING_ROOMS_COUNT_SUS_THRESHOLD) {
+            return false;
+        }
+
+        return true;
     }
 
     hasPriceDetails() {
@@ -43,6 +62,16 @@ export class DataExtractorImobiliareRo extends DataExtractor {
         const price = this.extractPrice();
 
         return price >= LISTING_PRICE_MIN_THRESHOLD;
+    }
+
+    hasSurfaceDetails() {
+        if (this.dataLayerText.indexOf('propertySurface') === -1) {
+            return false;
+        }
+
+        const surface = this.extractSurface();
+
+        return !!surface;
     }
 
     hasRoomsCountDetails() {

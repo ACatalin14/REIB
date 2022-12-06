@@ -7,6 +7,7 @@ import { DbCollection } from '../DbLayer/DbCollection.js';
 import delay from 'delay';
 import { config } from 'dotenv';
 import { SimilarityDetector } from '../Helpers/SimilarityDetector.js';
+import { consoleLog } from '../Helpers/Utils.js';
 
 config(); // Use Environment Variables
 
@@ -78,10 +79,11 @@ async function checkListingsFromDb() {
     // const allListings4 = await dbImobiliare.find({ images: { $size: 4 } }, projection);
     // const allListings5 = await dbImobiliare.find({ images: { $size: 5 } }, projection);
     // const allListings = [...allListings1, ...allListings2, ...allListings3, ...allListings4, ...allListings5];
-    const allListings = await dbImobiliare.find({}, projection);
+    consoleLog('Fetching listings from db...')
+    const allListings = await dbImobiliare.find({images: {$exists: true}});
 
-    console.log('Listings to check:', allListings.length, '\n');
-    console.log('SIMILAR LISTING PAIRS:\n');
+    consoleLog('Listings to check:', allListings.length);
+    consoleLog('SIMILAR LISTING PAIRS:');
 
     let pairsCount = 0;
 
@@ -91,12 +93,12 @@ async function checkListingsFromDb() {
                 allListings[i].roomsCount === allListings[j].roomsCount &&
                 similarityDetector.checkSimilarityForHashesLists(allListings[i].images, allListings[j].images);
             if (areSimilar) {
-                console.log('Pair', ++pairsCount, `[${i}, ${j}]`);
-                console.log(allListings[i].id);
-                console.log(allListings[j].id, '\n');
+                consoleLog('Pair', ++pairsCount, `[${i}, ${j}]: (${allListings[i].id}, ${allListings[j].id})`);
             }
         }
     }
+
+    consoleLog('Done checking listings from db.')
 
     await dbClient.disconnect();
 }

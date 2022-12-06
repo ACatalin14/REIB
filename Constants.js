@@ -14,6 +14,7 @@ export const DEFAULT_HASH_SIZE = 16; // Use powers of 2
 export const SOURCE_IMOBILIARE_RO = 'imobiliare.ro';
 export const SOURCE_OLX_RO = 'olx.ro';
 
+// TODO: Adapt collections to the new strategy
 export const DB_COLLECTION_CLOSED_LISTINGS = 'closedListings';
 export const DB_COLLECTION_DISTINCT_LISTINGS = 'distinctListings';
 export const DB_COLLECTION_IMOBILIARE = 'imobiliareRoListings';
@@ -72,3 +73,5 @@ export const REFERRERS_IMOBILIARE_RO = [
 ];
 
 export const LISTING_PRICE_MIN_THRESHOLD = 10000; // Minimum amount of Euros a listing must have to be saved in database
+export const LISTING_PRICE_MAX_SUS_THRESHOLD = 5000000; // Maximum amount of Euros a listing can have without roomsCount check
+export const LISTING_ROOMS_COUNT_SUS_THRESHOLD = 8;

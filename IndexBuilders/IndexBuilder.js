@@ -116,7 +116,7 @@ export class IndexBuilder {
     }
 
     getListingDetailsWithExtractor(listingShortData) {
-        if (!this.dataExtractor.hasListingDetails()) {
+        if (!this.dataExtractor.hasValidListingDetails()) {
             throw new Error('Cannot find all listing details.');
         }
 
