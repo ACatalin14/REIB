@@ -83,7 +83,7 @@ export class SmartRequester {
 
     async getNewBrowserAndNewPageWithProxy() {
         const proxy = this.getRandomProxy();
-        const browser = this.getNewBrowser(proxy);
+        const browser = await this.getNewBrowser(proxy);
         const browserPage = await browser.newPage();
 
         await browserPage.authenticate({
@@ -95,7 +95,7 @@ export class SmartRequester {
     }
 
     async getNewBrowserAndNewPageWithoutProxy() {
-        const browser = this.getNewBrowser();
+        const browser = await this.getNewBrowser();
         const browserPage = await browser.newPage();
 
         return [browser, browserPage];
