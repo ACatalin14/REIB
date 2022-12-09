@@ -7,7 +7,7 @@ import { DbCollection } from '../DbLayer/DbCollection.js';
 import delay from 'delay';
 import { config } from 'dotenv';
 import { SimilarityDetector } from '../Helpers/SimilarityDetector.js';
-import { consoleLog } from '../Helpers/Utils.js';
+import { consoleLog, getRandomRestingDelay } from '../Helpers/Utils.js';
 
 config(); // Use Environment Variables
 
@@ -32,8 +32,7 @@ const checkListingsFromUrls = async function () {
         authority: 'www.imobiliare.ro',
     });
 
-    let browser = await smartRequester.getHeadlessBrowser();
-    let browserPage = await browser.newPage();
+    const [browser, browserPage] = await smartRequester.getNewBrowserAndNewPage();
 
     let originalListing = await fetchListingFromUrl(
         ORIGINAL_URL,
@@ -43,13 +42,13 @@ const checkListingsFromUrls = async function () {
         imageHasher
     );
 
-    await delay(smartRequester.getRandomRestingDelay());
+    await delay(getRandomRestingDelay());
 
     let sampleListings = [];
     for (let sampleUrl of SAMPLE_URLS) {
         const listing = await fetchListingFromUrl(sampleUrl, browserPage, smartRequester, dataExtractor, imageHasher);
         sampleListings.push(listing);
-        await delay(smartRequester.getRandomRestingDelay());
+        await delay(getRandomRestingDelay());
     }
 
     sampleListings.forEach((sampleListing, index) => {
@@ -79,8 +78,8 @@ async function checkListingsFromDb() {
     // const allListings4 = await dbImobiliare.find({ images: { $size: 4 } }, projection);
     // const allListings5 = await dbImobiliare.find({ images: { $size: 5 } }, projection);
     // const allListings = [...allListings1, ...allListings2, ...allListings3, ...allListings4, ...allListings5];
-    consoleLog('Fetching listings from db...')
-    const allListings = await dbImobiliare.find({images: {$exists: true}});
+    consoleLog('Fetching listings from db...');
+    const allListings = await dbImobiliare.find({ images: { $exists: true } });
 
     consoleLog('Listings to check:', allListings.length);
     consoleLog('SIMILAR LISTING PAIRS:');
@@ -98,7 +97,7 @@ async function checkListingsFromDb() {
         }
     }
 
-    consoleLog('Done checking listings from db.')
+    consoleLog('Done checking listings from db.');
 
     await dbClient.disconnect();
 }

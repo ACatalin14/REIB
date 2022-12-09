@@ -1,4 +1,4 @@
-import { consoleLog, tryConnectToDatabase, tryDisconnectFromDatabase } from '../Helpers/Utils.js';
+import { consoleLog } from '../Helpers/Utils.js';
 import { DB_COLLECTION_DISTINCT_LISTINGS, SOURCE_TO_DB_COLLECTION_MAP } from '../Constants.js';
 import { DbCollection } from '../DbLayer/DbCollection.js';
 
@@ -11,7 +11,8 @@ export class DistinctIndexBuilder {
     }
 
     async build() {
-        await tryConnectToDatabase(this.dbClient, this.source);
+        consoleLog(`[${this.source}] Connecting to the database...`);
+        await this.dbClient.connect();
 
         consoleLog(`[${this.source}] Distinct index builder started.`);
 
@@ -27,9 +28,10 @@ export class DistinctIndexBuilder {
 
         await distinctListingsCollection.insertMany(this.distinctListings);
 
-        consoleLog(`[${this.source}] Distinct index builder finished.`);
+        consoleLog(`[${this.source}] Disconnecting from the database...`);
+        await this.dbClient.disconnect();
 
-        await tryDisconnectFromDatabase(this.dbClient, this.source);
+        consoleLog(`[${this.source}] Distinct index builder finished.`);
     }
 
     async extractDistinctListingsFromCollection(source, collection) {

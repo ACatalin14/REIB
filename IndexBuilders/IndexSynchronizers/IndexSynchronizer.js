@@ -1,5 +1,5 @@
 import { IndexBuilder } from '../IndexBuilder.js';
-import { consoleLog, indexObjectsByKey, mapObjectsToValueOfKey } from '../../Helpers/Utils.js';
+import { consoleLog, getRandomRestingDelay, indexObjectsByKey, mapObjectsToValueOfKey } from '../../Helpers/Utils.js';
 import delay from 'delay';
 import { SYNCHRONIZATION_TIME } from '../../Constants.js';
 
@@ -137,7 +137,7 @@ export class IndexSynchronizer extends IndexBuilder {
                 if (!isOnMarket) {
                     await this.createMarketListing(xmlListings[i], listingsToBeAdded);
                     consoleLog(`[${this.source}] Fetched and added listing to database. Waiting...`);
-                    await delay(this.smartRequester.getRandomRestingDelay());
+                    await delay(getRandomRestingDelay());
                     continue;
                 }
 
@@ -145,7 +145,7 @@ export class IndexSynchronizer extends IndexBuilder {
                 if (marketListing.lastModified < xmlListings[i].lastModified) {
                     await this.updateMarketListing(xmlListings[i]);
                     consoleLog(`[${this.source}] Fetched and updated listing in database. Waiting...`);
-                    await delay(this.smartRequester.getRandomRestingDelay());
+                    await delay(getRandomRestingDelay());
                 }
             } catch (error) {
                 consoleLog(`[${this.source}] Cannot process XML listing.`);

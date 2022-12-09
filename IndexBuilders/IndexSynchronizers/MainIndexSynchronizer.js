@@ -12,7 +12,7 @@ import {
 import { ImageHasher } from '../../Helpers/ImageHasher.js';
 import { DbCollection } from '../../DbLayer/DbCollection.js';
 import { DbClient } from '../../DbLayer/DbClient.js';
-import { consoleLog, tryConnectToDatabase, tryDisconnectFromDatabase } from '../../Helpers/Utils.js';
+import { consoleLog } from '../../Helpers/Utils.js';
 import { SimilarityDetector } from '../../Helpers/SimilarityDetector.js';
 
 export class MainIndexSynchronizer {
@@ -23,20 +23,18 @@ export class MainIndexSynchronizer {
     async sync() {
         this.dbClient = new DbClient();
 
-        if (!(await tryConnectToDatabase(this.dbClient))) {
-            return;
-        }
+        consoleLog('[main-synchronizer] Connecting to the database...');
+        await this.dbClient.connect();
 
         await this.syncIndexImobiliareRo();
         // await this.syncIndexOlxRo();
         // await this.syncIndexStoriaRo();
         // await this.syncIndexAnuntulRo();
 
-        if (!(await tryDisconnectFromDatabase(this.dbClient))) {
-            return;
-        }
+        consoleLog('[main-synchronizer] Disconnecting from the database...');
+        await this.dbClient.disconnect();
 
-        consoleLog('[reib] Synchronization complete.');
+        consoleLog('[main-synchronizer] Synchronization complete.');
     }
 
     async syncIndexImobiliareRo() {

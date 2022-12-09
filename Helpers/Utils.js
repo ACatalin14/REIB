@@ -1,4 +1,23 @@
 import fs from 'fs';
+import delay from 'delay';
+import { RESTING_DELAY_MAX, RESTING_DELAY_MIN } from '../Constants.js';
+
+export function getRandomItem(items) {
+    const randomIndex = Math.floor(Math.random() * items.length);
+    return items[randomIndex];
+}
+
+export function getRandomRestingDelay() {
+    return RESTING_DELAY_MIN + Math.random() * (RESTING_DELAY_MAX - RESTING_DELAY_MIN);
+}
+
+export function useProxies() {
+    if (!process.env.USE_PROXIES) {
+        return false;
+    }
+
+    return ['yes', 'true', '1'].includes(process.env.USE_PROXIES.toLowerCase());
+}
 
 export function consoleLog(...logs) {
     const timeFormatting = {
@@ -39,26 +58,27 @@ export function indexObjectsByKey(objects, key) {
     return map;
 }
 
-export async function tryConnectToDatabase(dbClient, logSource = 'reib') {
+export async function callUntilSuccess(method, args, errorMessage, retryTimeMs, attemptsCount = null) {
     try {
-        consoleLog(`[${logSource}] Connecting to the database...`);
-        await dbClient.connect();
-        return true;
+        return await method(...args);
     } catch (error) {
-        consoleLog(`[${logSource}] Cannot connect to Mongo DB.`);
         consoleLog(error);
-        return false;
-    }
-}
 
-export async function tryDisconnectFromDatabase(dbClient, logSource = 'reib') {
-    try {
-        consoleLog(`[${logSource}] Disconnecting from the database...`);
-        await dbClient.disconnect();
-        return true;
-    } catch (error) {
-        consoleLog(`[${logSource}] Cannot disconnect from Mongo DB.`);
-        consoleLog(error);
-        return false;
+        attemptsCount = attemptsCount === null ? null : attemptsCount - 1;
+
+        if (attemptsCount === 0) {
+            consoleLog(`${errorMessage}`);
+            throw error;
+        }
+
+        const retryMessage = `Retrying in ${retryTimeMs / 1000} seconds...`;
+        const message =
+            attemptsCount === null
+                ? `${errorMessage} ${retryMessage}`
+                : `${errorMessage} Attempting for ${attemptsCount} more times. ${retryMessage}`;
+
+        consoleLog(message);
+        await delay(retryTimeMs);
+        return await callUntilSuccess(method, args, errorMessage, retryTimeMs, attemptsCount);
     }
 }

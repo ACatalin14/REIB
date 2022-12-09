@@ -1,5 +1,5 @@
 import { IndexBuilder } from '../IndexBuilder.js';
-import { consoleLog, mapObjectsToValueOfKey } from '../../Helpers/Utils.js';
+import { consoleLog, getRandomRestingDelay, mapObjectsToValueOfKey } from '../../Helpers/Utils.js';
 import delay from 'delay';
 
 export class IndexInitializer extends IndexBuilder {
@@ -52,7 +52,7 @@ export class IndexInitializer extends IndexBuilder {
             try {
                 await this.dbMarketListings.updateOne({ id: listingData.id }, { $set: listingData });
                 consoleLog(`[${this.source}] Fetched and saved listing successfully. Waiting...`);
-                await delay(this.smartRequester.getRandomRestingDelay());
+                await delay(getRandomRestingDelay());
             } catch (error) {
                 consoleLog(`[${this.source}] Cannot update listing data from: ${xmlListings[i].url}`);
                 consoleLog(error);

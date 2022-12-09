@@ -7,7 +7,7 @@ import {
     DB_COLLECTION_DISTINCT_LISTINGS,
 } from '../Constants.js';
 import { DbClient } from '../DbLayer/DbClient.js';
-import { tryConnectToDatabase, consoleLog, tryDisconnectFromDatabase } from '../Helpers/Utils.js';
+import { consoleLog } from '../Helpers/Utils.js';
 import { DbCollection } from '../DbLayer/DbCollection.js';
 import { Int32 } from 'mongodb';
 
@@ -27,13 +27,15 @@ export class StatsMaker {
 
         consoleLog('[stats] Computing end of month statistics started.');
 
-        await tryConnectToDatabase(this.dbClient, 'stats');
+        consoleLog('[stats] Connecting to the database...');
+        await this.dbClient.connect();
 
         await this.makeMarketStats();
         await this.makeClosedListingsStats();
         await this.makeDistinctListingsStats();
 
-        await tryDisconnectFromDatabase(this.dbClient, 'stats');
+        consoleLog('[stats] Disconnecting from the database...');
+        await this.dbClient.disconnect();
 
         consoleLog('[stats] Computing end of month statistics finished.');
     }

@@ -1,6 +1,9 @@
 export const RESTING_DELAY_MIN = 1000; // 1 seconds
 export const RESTING_DELAY_MAX = 4000; // 4 seconds
 export const RETRY_IMAGES_FETCH_DELAY = 65000; // 65 seconds
+export const RETRY_DB_OPERATION_DELAY = 30000; // 30 seconds
+export const RETRY_XML_FETCH_DELAY = 5000; // 5 seconds
+export const RETRY_BROWSER_CREATE_DELAY = 1000; // 1 second
 
 export const SYNCHRONIZATION_TIME = '14:00';
 
@@ -40,14 +43,18 @@ export const HTTP_STATUS_CODE_OK = 200;
 
 export const PROXIES_COUNT = 100;
 
+// Working proxies available by webshare.io
 export const WORKING_PROXIES = [
-    'http://93.191.96.4:3128', // Belarus
-    'http://200.105.215.18:33630', // Bolivia
-    'http://45.189.118.74:999', // Peru
-    'http://157.100.12.138:999', // Ecuador
-    'http://45.167.125.61:9992', // Colombia 91% uptime
-    'http://45.167.125.97:9992', // Colombia 100% uptime
-    // '49.0.2.242:8090',  // Indonesia - 403 Forbidden
+    '185.199.229.156:7492:koqpsbza:vmlw1cx5p6lc',
+    '185.199.228.220:7300:koqpsbza:vmlw1cx5p6lc',
+    '185.199.231.45:8382:koqpsbza:vmlw1cx5p6lc',
+    '188.74.210.207:6286:koqpsbza:vmlw1cx5p6lc',
+    '188.74.183.10:8279:koqpsbza:vmlw1cx5p6lc',
+    '188.74.210.21:6100:koqpsbza:vmlw1cx5p6lc',
+    '45.155.68.129:8133:koqpsbza:vmlw1cx5p6lc',
+    '154.95.36.199:6893:koqpsbza:vmlw1cx5p6lc',
+    '45.94.47.66:8110:koqpsbza:vmlw1cx5p6lc',
+    '144.168.217.88:8780:koqpsbza:vmlw1cx5p6lc',
 ];
 
 export const USER_AGENTS = [

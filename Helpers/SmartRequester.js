@@ -1,33 +1,34 @@
 import axios from 'axios';
-import { RESTING_DELAY_MAX, RESTING_DELAY_MIN, USER_AGENTS } from '../Constants.js';
+import { RETRY_BROWSER_CREATE_DELAY, USER_AGENTS, WORKING_PROXIES } from '../Constants.js';
 import Jimp from 'jimp';
 import puppeteer from 'puppeteer';
-import { consoleLog } from './Utils.js';
+import { callUntilSuccess, getRandomItem, useProxies } from './Utils.js';
+import createHttpsProxyAgent from 'https-proxy-agent';
 
 export class SmartRequester {
     constructor(referrers, imagesReferer, headersConfig) {
         this.referrers = referrers;
         this.imagesReferer = imagesReferer;
         this.headersConfig = headersConfig;
+        this.shouldUseProxies = useProxies();
+        this.source = 'smart-requester';
     }
 
-    getRandomUserAgent() {
-        const randomIndex = Math.floor(Math.random() * USER_AGENTS.length);
-        return USER_AGENTS[randomIndex];
-    }
+    getRandomProxy() {
+        const proxyDetailsString = getRandomItem(WORKING_PROXIES);
+        const proxyDetails = proxyDetailsString.split(':');
 
-    getRandomReferer() {
-        const randomIndex = Math.floor(Math.random() * this.referrers.length);
-        return this.referrers[randomIndex];
-    }
-
-    getRandomRestingDelay() {
-        return RESTING_DELAY_MIN + Math.random() * (RESTING_DELAY_MAX - RESTING_DELAY_MIN);
+        return {
+            host: proxyDetails[0],
+            port: proxyDetails[1],
+            user: proxyDetails[2],
+            pass: proxyDetails[3],
+        };
     }
 
     getDefaultHeaders() {
         return {
-            'user-agent': this.getRandomUserAgent(),
+            'user-agent': getRandomItem(USER_AGENTS),
             accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
             'accept-encoding': 'gzip, deflate, br',
             'accept-language': 'en-US,en;q=0.9',
@@ -38,12 +39,75 @@ export class SmartRequester {
             'sec-fetch-site': 'none',
             'sec-fetch-user': '?1',
             'upgrade-insecure-requests': '1',
-            referer: this.getRandomReferer(),
+            referer: getRandomItem(this.referrers),
         };
     }
 
-    async getHeadlessBrowser() {
-        return await puppeteer.launch({ args: ['--no-sandbox'] });
+    async get(url) {
+        const config = {
+            headers: {
+                ...this.getDefaultHeaders(),
+                ...this.headersConfig,
+            },
+        };
+
+        if (this.shouldUseProxies) {
+            const proxy = this.getRandomProxy();
+            config.proxy = false;
+            config.httpsAgent = createHttpsProxyAgent({
+                host: proxy.host,
+                port: proxy.port,
+                auth: `${proxy.user}:${proxy.pass}`,
+            });
+        }
+
+        return await axios.get(url, config);
+    }
+
+    async getNewBrowserAndNewPage() {
+        const method = async () => {
+            if (this.shouldUseProxies) {
+                return await this.getNewBrowserAndNewPageWithProxy();
+            }
+
+            return await this.getNewBrowserAndNewPageWithoutProxy();
+        };
+
+        return await callUntilSuccess(
+            method.bind(this),
+            [],
+            `[${this.source}] Cannot launch headless browser. Retrying in 1 second...`,
+            RETRY_BROWSER_CREATE_DELAY
+        );
+    }
+
+    async getNewBrowserAndNewPageWithProxy() {
+        const proxy = this.getRandomProxy();
+
+        const browser = await puppeteer.launch({
+            headless: false,
+            args: ['--no-sandbox', `--proxy-server=${proxy.host}:${proxy.port}`],
+        });
+
+        const browserPage = await browser.newPage();
+
+        await browserPage.authenticate({
+            username: proxy.user,
+            password: proxy.pass,
+        });
+
+        return [browser, browserPage];
+    }
+
+    async getNewBrowserAndNewPageWithoutProxy() {
+        const browser = await puppeteer.launch({
+            headless: false,
+            args: ['--no-sandbox'],
+        });
+
+        const browserPage = await browser.newPage();
+
+        return [browser, browserPage];
     }
 
     async getPageFromUrl(browserPage, url) {
@@ -57,44 +121,66 @@ export class SmartRequester {
         return await browserPage.content();
     }
 
-    async get(url) {
-        try {
-            return await axios.get(url, {
-                headers: {
-                    ...this.getDefaultHeaders(),
-                    ...this.headersConfig,
-                },
-            });
-        } catch (error) {
-            consoleLog(error);
+    async fetchImagesFromUrls(urls) {
+        let images;
+
+        if (this.shouldUseProxies) {
+            images = await this.fetchImagesInParallel(urls);
+        } else {
+            images = await this.fetchImagesSequentially(urls);
         }
+
+        if (images.length < urls.length / 2) {
+            throw new Error(`Cannot fetch half of images in listing (${images.length}/${urls.length} fetched).`);
+        }
+
+        return images;
     }
 
-    async fetchImagesFromUrls(urls) {
-        let promises = [];
+    async fetchImagesInParallel(urls) {
+        const promises = [];
 
         for (let i = 0; i < urls.length; i++) {
             promises.push(this.getImagePromise(urls[i]));
         }
 
         const results = await Promise.allSettled(promises);
-        const images = results.filter((result) => result.status === 'fulfilled').map((result) => result.value);
 
-        if (images.length < results.length / 2) {
-            throw new Error(`Cannot fetch half of images in listing (${images.length}/${results.length} fetched).`);
+        return results.filter((result) => result.status === 'fulfilled').map((result) => result.value);
+    }
+
+    async fetchImagesSequentially(urls) {
+        const images = [];
+
+        for (let i = 0; i < urls.length; i++) {
+            try {
+                const image = await this.getImagePromise(urls[i]);
+                images.push(image);
+            } catch (error) {}
         }
 
         return images;
     }
 
     async getImagePromise(url) {
-        return Jimp.read({
+        const config = {
             url: url,
             headers: {
                 ...this.getDefaultHeaders(),
                 ...this.headersConfig,
                 referer: this.imagesReferer,
             },
-        });
+        };
+
+        if (this.shouldUseProxies) {
+            const proxy = this.getRandomProxy();
+            config.agent = createHttpsProxyAgent({
+                host: proxy.host,
+                port: proxy.port,
+                auth: `${proxy.user}:${proxy.pass}`,
+            });
+        }
+
+        return Jimp.read(config);
     }
 }

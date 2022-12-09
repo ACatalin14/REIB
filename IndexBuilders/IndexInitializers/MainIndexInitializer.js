@@ -10,7 +10,7 @@ import {
 import { ImageHasher } from '../../Helpers/ImageHasher.js';
 import { DbCollection } from '../../DbLayer/DbCollection.js';
 import { DbClient } from '../../DbLayer/DbClient.js';
-import { consoleLog, tryConnectToDatabase, tryDisconnectFromDatabase } from '../../Helpers/Utils.js';
+import { consoleLog } from '../../Helpers/Utils.js';
 
 export class MainIndexInitializer {
     constructor() {
@@ -20,9 +20,8 @@ export class MainIndexInitializer {
     async init() {
         this.dbClient = new DbClient();
 
-        if (!(await tryConnectToDatabase(this.dbClient))) {
-            return;
-        }
+        consoleLog('[main-initializer] Connecting to the database...');
+        await this.dbClient.connect();
 
         await Promise.all([
             this.initializeIndexImobiliareRo(),
@@ -31,11 +30,10 @@ export class MainIndexInitializer {
             // this.initializeAnuntulRoIndex(),
         ]);
 
-        if (!(await tryDisconnectFromDatabase(this.dbClient))) {
-            return;
-        }
+        consoleLog('[main-initializer] Disconnecting from the database...');
+        await this.dbClient.disconnect();
 
-        consoleLog('[reib] Initialization complete.');
+        consoleLog('[main-initializer] Initialization complete.');
     }
 
     async initializeIndexImobiliareRo() {

@@ -1,7 +1,7 @@
-import { consoleLog } from '../Helpers/Utils.js';
+import { callUntilSuccess, consoleLog } from '../Helpers/Utils.js';
 import { load } from 'cheerio';
 import delay from 'delay';
-import { RETRY_IMAGES_FETCH_DELAY } from '../Constants.js';
+import { RETRY_IMAGES_FETCH_DELAY, RETRY_XML_FETCH_DELAY } from '../Constants.js';
 
 export class IndexBuilder {
     constructor(source, dbCollection, dataExtractor, smartRequester, imageHasher) {
@@ -19,14 +19,14 @@ export class IndexBuilder {
     async fetchListingsFromXml(xmlUrl) {
         let response;
 
-        try {
-            consoleLog(`[${this.source}] Fetching XML from: ${xmlUrl}`);
-            response = await this.smartRequester.get(xmlUrl);
-        } catch (error) {
-            // TODO: Retry everywhere by waiting 1 second and doing again the request / mongo query / etc.
-            consoleLog(`[${this.source}] Error while fetching XML from: ${xmlUrl}.`);
-            throw error;
-        }
+        consoleLog(`[${this.source}] Fetching XML from: ${xmlUrl}`);
+
+        response = await callUntilSuccess(
+            this.smartRequester.get.bind(this.smartRequester),
+            [xmlUrl],
+            `[${this.source}] Error while fetching XML from: ${xmlUrl}.`,
+            RETRY_XML_FETCH_DELAY
+        );
 
         const $ = load(response.data, { xmlMode: true });
         let xmlListings = [];
@@ -70,7 +70,7 @@ export class IndexBuilder {
     }
 
     async fetchListingDetailsAndImageUrls(listingShortData) {
-        let [browser, browserPage] = await this.getNewBrowserAndNewPage();
+        let [browser, browserPage] = await this.smartRequester.getNewBrowserAndNewPage();
 
         try {
             consoleLog(`[${this.source}] Fetching listing page...`);
@@ -143,19 +143,6 @@ export class IndexBuilder {
         } catch (error) {
             consoleLog(`[${this.source}] Cannot extract image URL's from listing.`);
             throw error;
-        }
-    }
-
-    async getNewBrowserAndNewPage() {
-        try {
-            let browser = await this.smartRequester.getHeadlessBrowser();
-            let browserPage = await browser.newPage();
-
-            return [browser, browserPage];
-        } catch (error) {
-            consoleLog(`[${this.source}] Cannot launch headless browser. Retrying in 1 second...`);
-            await delay(1000);
-            return await this.getNewBrowserAndNewPage();
         }
     }
 
