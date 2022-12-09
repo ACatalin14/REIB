@@ -12,11 +12,19 @@ export function getRandomRestingDelay() {
 }
 
 export function useProxies() {
-    if (!process.env.USE_PROXIES) {
+    return getBooleanValueFromEnvVariable(process.env.USE_PROXIES);
+}
+
+export function useHeadlessBrowser() {
+    return getBooleanValueFromEnvVariable(process.env.USE_HEADLESS_BROWSER);
+}
+
+function getBooleanValueFromEnvVariable(envVariable) {
+    if (!envVariable) {
         return false;
     }
 
-    return ['yes', 'true', '1'].includes(process.env.USE_PROXIES.toLowerCase());
+    return ['yes', 'true', '1'].includes(envVariable.toLowerCase());
 }
 
 export function consoleLog(...logs) {

@@ -2,7 +2,7 @@ import axios from 'axios';
 import { RETRY_CREATE_BROWSER_DELAY, USER_AGENTS, WORKING_PROXIES } from '../Constants.js';
 import Jimp from 'jimp';
 import puppeteer from 'puppeteer';
-import { callUntilSuccess, getRandomItem, useProxies } from './Utils.js';
+import { callUntilSuccess, getRandomItem, useHeadlessBrowser, useProxies } from './Utils.js';
 import createHttpsProxyAgent from 'https-proxy-agent';
 
 export class SmartRequester {
@@ -102,7 +102,7 @@ export class SmartRequester {
     }
 
     async getNewBrowser(proxy = null) {
-        const config = { headless: false };
+        const config = { headless: useHeadlessBrowser() };
 
         if (proxy) {
             config.args = ['--no-sandbox', `--proxy-server=${proxy.host}:${proxy.port}`];
