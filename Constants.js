@@ -3,7 +3,7 @@ export const RESTING_DELAY_MAX = 4000; // 4 seconds
 export const RETRY_IMAGES_FETCH_DELAY = 65000; // 65 seconds
 export const RETRY_DB_OPERATION_DELAY = 30000; // 30 seconds
 export const RETRY_XML_FETCH_DELAY = 5000; // 5 seconds
-export const RETRY_BROWSER_CREATE_DELAY = 1000; // 1 second
+export const RETRY_CREATE_BROWSER_DELAY = 1000; // 1 second
 
 export const SYNCHRONIZATION_TIME = '14:00';
 

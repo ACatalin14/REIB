@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { RETRY_BROWSER_CREATE_DELAY, USER_AGENTS, WORKING_PROXIES } from '../Constants.js';
+import { RETRY_CREATE_BROWSER_DELAY, USER_AGENTS, WORKING_PROXIES } from '../Constants.js';
 import Jimp from 'jimp';
 import puppeteer from 'puppeteer';
 import { callUntilSuccess, getRandomItem, useProxies } from './Utils.js';
@@ -77,18 +77,13 @@ export class SmartRequester {
             method.bind(this),
             [],
             `[${this.source}] Cannot launch headless browser. Retrying in 1 second...`,
-            RETRY_BROWSER_CREATE_DELAY
+            RETRY_CREATE_BROWSER_DELAY
         );
     }
 
     async getNewBrowserAndNewPageWithProxy() {
         const proxy = this.getRandomProxy();
-
-        const browser = await puppeteer.launch({
-            headless: false,
-            args: ['--no-sandbox', `--proxy-server=${proxy.host}:${proxy.port}`],
-        });
-
+        const browser = this.getNewBrowser(proxy);
         const browserPage = await browser.newPage();
 
         await browserPage.authenticate({
@@ -100,14 +95,26 @@ export class SmartRequester {
     }
 
     async getNewBrowserAndNewPageWithoutProxy() {
-        const browser = await puppeteer.launch({
-            headless: false,
-            args: ['--no-sandbox'],
-        });
-
+        const browser = this.getNewBrowser();
         const browserPage = await browser.newPage();
 
         return [browser, browserPage];
+    }
+
+    async getNewBrowser(proxy = null) {
+        const config = { headless: false };
+
+        if (proxy) {
+            config.args = ['--no-sandbox', `--proxy-server=${proxy.host}:${proxy.port}`];
+        } else {
+            config.args = ['--no-sandbox'];
+        }
+
+        if (process.env.CHROMIUM_BROWSER_PATH) {
+            config.executablePath = process.env.CHROMIUM_BROWSER_PATH;
+        }
+
+        return await puppeteer.launch(config);
     }
 
     async getPageFromUrl(browserPage, url) {
