@@ -36,6 +36,9 @@ export const SOURCE_TO_DB_COLLECTION_MAP = {
     [SOURCE_IMOBILIARE_RO]: DB_COLLECTION_IMOBILIARE,
 };
 
+export const IMAGES_FETCH_MODE_PARALLEL = 'parallel';
+export const IMAGES_FETCH_MODE_SEQUENTIAL = 'sequential';
+
 export const URL_SSL_PROXIES = 'https://sslproxies.org/';
 export const URL_XML_IMOBILIARE_LISTINGS_BUCHAREST =
     'https://www.imobiliare.ro/sitemap-listings-apartments-for-sale-bucuresti-ilfov-ro.xml';

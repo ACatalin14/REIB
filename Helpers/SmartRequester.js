@@ -1,5 +1,11 @@
 import axios from 'axios';
-import { RETRY_CREATE_BROWSER_DELAY, USER_AGENTS, WORKING_PROXIES } from '../Constants.js';
+import {
+    IMAGES_FETCH_MODE_PARALLEL,
+    IMAGES_FETCH_MODE_SEQUENTIAL,
+    RETRY_CREATE_BROWSER_DELAY,
+    USER_AGENTS,
+    WORKING_PROXIES,
+} from '../Constants.js';
 import Jimp from 'jimp';
 import puppeteer from 'puppeteer';
 import { callUntilSuccess, getRandomItem, useHeadlessBrowser, useProxies } from './Utils.js';
@@ -131,10 +137,17 @@ export class SmartRequester {
     async fetchImagesFromUrls(urls) {
         let images;
 
-        if (this.shouldUseProxies) {
-            images = await this.fetchImagesInParallel(urls);
-        } else {
-            images = await this.fetchImagesSequentially(urls);
+        switch (process.env.IMAGES_FETCH_MODE) {
+            case IMAGES_FETCH_MODE_PARALLEL:
+                images = await this.fetchImagesInParallel(urls);
+                break;
+            case IMAGES_FETCH_MODE_SEQUENTIAL:
+                images = await this.fetchImagesSequentially(urls);
+                break;
+            default:
+                throw new Error(
+                    `Must initialize env variable IMAGES_FETCH_MODE with "${IMAGES_FETCH_MODE_PARALLEL}" or "${IMAGES_FETCH_MODE_SEQUENTIAL}".`
+                );
         }
 
         if (images.length < urls.length / 2) {
