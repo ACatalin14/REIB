@@ -18,6 +18,8 @@ export const SOURCE_IMOBILIARE_RO = 'imobiliare.ro';
 export const SOURCE_OLX_RO = 'olx.ro';
 
 // TODO: Adapt collections to the new strategy
+export const DB_REIB = 'reib';
+export const DB_REIB_TEST = 'reib-test';
 export const DB_COLLECTION_CLOSED_LISTINGS = 'closedListings';
 export const DB_COLLECTION_DISTINCT_LISTINGS = 'distinctListings';
 export const DB_COLLECTION_IMOBILIARE = 'imobiliareRoListings';

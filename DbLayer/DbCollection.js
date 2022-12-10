@@ -1,5 +1,5 @@
-import { callUntilSuccess } from '../Helpers/Utils.js';
-import { RETRY_DB_OPERATION_DELAY } from '../Constants.js';
+import { callUntilSuccess, useTestDb } from '../Helpers/Utils.js';
+import { DB_REIB, DB_REIB_TEST, RETRY_DB_OPERATION_DELAY } from '../Constants.js';
 
 export class DbCollection {
     constructor(name, dbClient) {
@@ -9,7 +9,8 @@ export class DbCollection {
     }
 
     getCollection() {
-        return this.dbClient.client.db('reib').collection(this.name);
+        const dbName = useTestDb() ? DB_REIB_TEST : DB_REIB;
+        return this.dbClient.client.db(dbName).collection(this.name);
     }
 
     async aggregate(pipeline = [], options = {}) {

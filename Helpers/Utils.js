@@ -19,6 +19,10 @@ export function useHeadlessBrowser() {
     return getBooleanValueFromEnvVariable(process.env.USE_HEADLESS_BROWSER);
 }
 
+export function useTestDb() {
+    return getBooleanValueFromEnvVariable(process.env.USE_TEST_DB);
+}
+
 function getBooleanValueFromEnvVariable(envVariable) {
     if (!envVariable) {
         return false;
