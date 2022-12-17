@@ -1,4 +1,4 @@
-import { DB_COLLECTION_IMOBILIARE, REFERER_IMOBILIARE_RO, REFERRERS_IMOBILIARE_RO } from '../Constants.js';
+import { REFERER_IMOBILIARE_RO, REFERRERS_IMOBILIARE_RO, SIMILARITY_THRESHOLD_TYPE_RELATIVE } from '../Constants.js';
 import { DataExtractorImobiliareRo } from '../DataExtractors/DataExtractorImobiliareRo.js';
 import { SmartRequester } from '../Helpers/SmartRequester.js';
 import { ImageHasher } from '../Helpers/ImageHasher.js';
@@ -67,7 +67,7 @@ async function checkListingsFromDb() {
     const dbClient = new DbClient();
     await dbClient.connect();
 
-    const dbImobiliare = new DbCollection(DB_COLLECTION_IMOBILIARE, dbClient);
+    const dbImobiliare = new DbCollection('imobiliareRoListings', dbClient);
     const imageHasher = new ImageHasher();
     const similarityDetector = new SimilarityDetector(imageHasher);
 
@@ -79,7 +79,7 @@ async function checkListingsFromDb() {
     // const allListings5 = await dbImobiliare.find({ images: { $size: 5 } }, projection);
     // const allListings = [...allListings1, ...allListings2, ...allListings3, ...allListings4, ...allListings5];
     consoleLog('Fetching listings from db...');
-    const allListings = await dbImobiliare.find({ images: { $exists: true } });
+    const allListings = await dbImobiliare.find({ images: { $exists: true }, url: { $exists: true } });
 
     consoleLog('Listings to check:', allListings.length);
     consoleLog('SIMILAR LISTING PAIRS:');
@@ -90,7 +90,11 @@ async function checkListingsFromDb() {
         for (let j = i + 1; j < allListings.length; j++) {
             const areSimilar =
                 allListings[i].roomsCount === allListings[j].roomsCount &&
-                similarityDetector.checkSimilarityForHashesLists(allListings[i].images, allListings[j].images);
+                similarityDetector.checkSimilarityForHashesLists(
+                    allListings[i].images,
+                    allListings[j].images,
+                    SIMILARITY_THRESHOLD_TYPE_RELATIVE
+                );
             if (areSimilar) {
                 consoleLog('Pair', ++pairsCount, `[${i}, ${j}]: (${allListings[i].id}, ${allListings[j].id})`);
             }

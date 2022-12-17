@@ -67,6 +67,15 @@ export class DbCollection {
         );
     }
 
+    async updateMany(filter, update, options = {}) {
+        return await callUntilSuccess(
+            this.updateManyMethod.bind(this),
+            [filter, update, options],
+            this.errorMessage,
+            RETRY_DB_OPERATION_DELAY
+        );
+    }
+
     async deleteOne(filter) {
         return await callUntilSuccess(
             this.deleteOneMethod.bind(this),
@@ -100,22 +109,26 @@ export class DbCollection {
     }
 
     async insertOneMethod(record) {
-        await this.getCollection().insertOne(record);
+        return await this.getCollection().insertOne(record);
     }
 
     async insertManyMethod(records) {
-        await this.getCollection().insertMany(records);
+        return await this.getCollection().insertMany(records);
     }
 
     async updateOneMethod(filter, update, options) {
-        await this.getCollection().updateOne(filter, update, options);
+        return await this.getCollection().updateOne(filter, update, options);
+    }
+
+    async updateManyMethod(filter, update, options) {
+        return await this.getCollection().updateMany(filter, update, options);
     }
 
     async deleteOneMethod(filter) {
-        await this.getCollection().deleteOne(filter);
+        return await this.getCollection().deleteOne(filter);
     }
 
     async deleteManyMethod(filter) {
-        await this.getCollection().deleteMany(filter);
+        return await this.getCollection().deleteMany(filter);
     }
 }

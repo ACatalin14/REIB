@@ -32,7 +32,7 @@ export class DataExtractorImobiliareRo extends DataExtractor {
         // Check if retrieved page does contain listing details. If not found, it is not
         // a valid listing page (search page with multiple results, 404 not found page, etc.)
         if (
-            !this.hasPriceDetails() ||
+            !this.hasBasePriceDetails() ||
             !this.hasSurfaceDetails() ||
             !this.hasRoomsCountDetails() ||
             this.hasExpiredMessageBox()
@@ -40,26 +40,22 @@ export class DataExtractorImobiliareRo extends DataExtractor {
             return false;
         }
 
-        const price = this.extractPrice();
+        const price = this.extractBasePrice();
         const roomsCount = this.extractRoomsCount();
 
         if (price < LISTING_PRICE_MIN_THRESHOLD) {
             return false;
         }
 
-        if (price > LISTING_PRICE_MAX_SUS_THRESHOLD && roomsCount < LISTING_ROOMS_COUNT_SUS_THRESHOLD) {
-            return false;
-        }
-
-        return true;
+        return price <= LISTING_PRICE_MAX_SUS_THRESHOLD || roomsCount >= LISTING_ROOMS_COUNT_SUS_THRESHOLD;
     }
 
-    hasPriceDetails() {
+    hasBasePriceDetails() {
         if (this.dataLayerText.indexOf('propertyPrice') === -1) {
             return false;
         }
 
-        const price = this.extractPrice();
+        const price = this.extractBasePrice();
 
         return price >= LISTING_PRICE_MIN_THRESHOLD;
     }
@@ -104,12 +100,41 @@ export class DataExtractorImobiliareRo extends DataExtractor {
         return expiredTags.length > 0;
     }
 
-    extractPrice() {
+    extractBasePrice() {
         const priceStartPos = this.dataLayerText.indexOf('propertyPrice') + 13 + 3;
         const priceLength = this.dataLayerText.substring(priceStartPos).indexOf(',');
         const priceText = this.dataLayerText.substring(priceStartPos, priceStartPos + priceLength);
 
         return Number(priceText);
+    }
+
+    extractHasSeparateTVA() {
+        const $ = load(this.html);
+
+        const containsPlusTVAString = function () {
+            const position = $(this).text().toLowerCase().indexOf('+ tva');
+            return position !== -1;
+        };
+
+        const tvaFromPrice = $('.pret > .tva').filter(containsPlusTVAString);
+        const tvaFromTitle = $('h1[data-monitive-marker-detalii]').filter(containsPlusTVAString);
+
+        return tvaFromPrice.length > 0 || tvaFromTitle.length > 0;
+    }
+
+    extractHasMentionedTVA() {
+        const $ = load(this.html);
+
+        const containsTVAString = function () {
+            const position = $(this).text().toLowerCase().indexOf('tva');
+            return position !== -1;
+        };
+
+        const tvaFromPrice = $('.pret > .tva').filter(containsTVAString);
+        const tvaFromTitle = $('h1[data-monitive-marker-detalii]').filter(containsTVAString);
+        const tvaFromDescription = $('#b_detalii_text .collapsible_content').filter(containsTVAString);
+
+        return tvaFromPrice.length > 0 || tvaFromTitle.length > 0 || tvaFromDescription.length > 0;
     }
 
     extractRoomsCount() {
@@ -171,11 +196,51 @@ export class DataExtractorImobiliareRo extends DataExtractor {
         return Number(surfaceText);
     }
 
+    extractZone() {
+        const zoneStartPos = this.dataLayerText.indexOf('propertyArea') + 12 + 4;
+        const zoneLength = this.dataLayerText.substring(zoneStartPos).indexOf("'");
+        const zone = this.dataLayerText.substring(zoneStartPos, zoneStartPos + zoneLength);
+
+        return zone === '' ? null : zone;
+    }
+
     extractConstructionYear() {
         const yearStartPos = this.dataLayerText.indexOf('propertyConstructionYear') + 24 + 4;
         const yearLength = this.dataLayerText.substring(yearStartPos).indexOf("'");
+        const year = this.dataLayerText.substring(yearStartPos, yearStartPos + yearLength);
 
-        return this.dataLayerText.substring(yearStartPos, yearStartPos + yearLength);
+        return year === '0' || year === '' ? null : year;
+    }
+
+    extractFloor() {
+        const $ = load(this.html);
+        const floorElements = $('#b_detalii_caracteristici ul > li').filter(function () {
+            return $(this).text().toLowerCase().indexOf('etaj') !== -1;
+        });
+
+        if (floorElements.length === 0) {
+            return null;
+        }
+
+        const floorText = $('span', floorElements[0]).text();
+
+        return floorText.replace(/[\s]*\/.+$/, '').replace(/(etaj[\s]*)/i, '');
+    }
+
+    extractHasCentralHeating() {
+        const $ = load(this.html);
+
+        const containsCentralHeating = function () {
+            const matches = $(this)
+                .text()
+                .match(/centrala( proprie| termica)/i);
+            return matches !== null;
+        };
+
+        const centralHeatingFromUtilities = $('ul.utilitati > li > span').filter(containsCentralHeating);
+        const centralHeatingFromDescription = $('#b_detalii_text .collapsible_content').filter(containsCentralHeating);
+
+        return centralHeatingFromUtilities.length > 0 || centralHeatingFromDescription.length > 0;
     }
 
     async extractImageUrls(browserPage) {

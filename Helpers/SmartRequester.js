@@ -8,7 +8,7 @@ import {
 } from '../Constants.js';
 import Jimp from 'jimp';
 import puppeteer from 'puppeteer';
-import { callUntilSuccess, getRandomItem, useHeadlessBrowser, useProxies } from './Utils.js';
+import { callUntilSuccess, consoleLog, getRandomItem, useHeadlessBrowser, useProxies } from './Utils.js';
 import createHttpsProxyAgent from 'https-proxy-agent';
 
 export class SmartRequester {
@@ -82,7 +82,7 @@ export class SmartRequester {
         return await callUntilSuccess(
             method.bind(this),
             [],
-            `[${this.source}] Cannot launch headless browser. Retrying in 1 second...`,
+            `[${this.source}] Cannot launch headless browser.`,
             RETRY_CREATE_BROWSER_DELAY
         );
     }
@@ -121,6 +121,15 @@ export class SmartRequester {
         }
 
         return await puppeteer.launch(config);
+    }
+
+    async closeBrowser(browser) {
+        try {
+            await browser.close();
+        } catch (error) {
+            consoleLog(`[${this.source}] Cannot close headless browser. Moving on...`);
+            consoleLog(error);
+        }
     }
 
     async getPageFromUrl(browserPage, url) {

@@ -1,6 +1,6 @@
 import fs from 'fs';
 import delay from 'delay';
-import { RESTING_DELAY_MAX, RESTING_DELAY_MIN } from '../Constants.js';
+import { RESTING_DELAY_MAX, RESTING_DELAY_MIN, SYNCHRONIZATION_TIME } from '../Constants.js';
 
 export function getRandomItem(items) {
     const randomIndex = Math.floor(Math.random() * items.length);
@@ -93,4 +93,14 @@ export async function callUntilSuccess(method, args, errorMessage, retryTimeMs, 
         await delay(retryTimeMs);
         return await callUntilSuccess(method, args, errorMessage, retryTimeMs, attemptsCount);
     }
+}
+
+// TODO: Use a env variable SYNC_DATE and set it everytime when syncIndex starts running
+export function getSyncDate() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth() + 1;
+    const day = today.getDate();
+
+    return new Date(`${year}-${month}-${day} ${SYNCHRONIZATION_TIME}`);
 }

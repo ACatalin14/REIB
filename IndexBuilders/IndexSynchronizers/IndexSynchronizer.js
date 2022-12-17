@@ -1,149 +1,121 @@
 import { IndexBuilder } from '../IndexBuilder.js';
-import { consoleLog, getRandomRestingDelay, indexObjectsByKey, mapObjectsToValueOfKey } from '../../Helpers/Utils.js';
+import {
+    consoleLog,
+    getRandomRestingDelay,
+    getSyncDate,
+    indexObjectsByKey,
+    mapObjectsToValueOfKey,
+} from '../../Helpers/Utils.js';
 import delay from 'delay';
-import { SYNCHRONIZATION_TIME } from '../../Constants.js';
 
 export class IndexSynchronizer extends IndexBuilder {
     constructor(
         source,
-        dbCollection,
+        apartmentsCollection,
+        listingsSubCollection,
+        liveListingsSubCollection,
         dataExtractor,
         smartRequester,
         imageHasher,
         similarityDetector,
-        dbClosedListings,
         dbSyncStats
     ) {
-        super(source, dbCollection, dataExtractor, smartRequester, imageHasher);
-        this.similarityDetector = similarityDetector;
-        this.dbClosedListings = dbClosedListings;
+        super(
+            source,
+            apartmentsCollection,
+            listingsSubCollection,
+            liveListingsSubCollection,
+            dataExtractor,
+            smartRequester,
+            imageHasher,
+            similarityDetector
+        );
         this.dbSyncStats = dbSyncStats;
-        this.dbClosedListingsRecords = [];
-        this.listingsToBeClosedCount = 0;
-        this.listingsToBeAddedCount = 0;
-        this.listingsToBeUpdatedCount = 0;
+        this.listingsClosedCount = 0;
+        this.listingsAddedCount = 0;
+        this.listingsUpdatedCount = 0;
     }
 
     async sync() {
         // To be implemented
     }
 
-    async fetchMissingMarketListingsFromXml(xmlListings) {
+    async fetchMissingLiveListingsFromXml(xmlListings) {
         try {
-            const dbListingsWithIds = await this.dbMarketListings.find({}, { projection: { _id: 0, id: 1 } });
+            const dbListingsWithIds = await this.liveListingsSubCollection.find({}, { projection: { _id: 0, id: 1 } });
 
             const dbListingsIdsSet = new Set(mapObjectsToValueOfKey(dbListingsWithIds, 'id'));
             const xmlListingsIdsSet = new Set(mapObjectsToValueOfKey(xmlListings, 'id'));
 
-            const deletedListingsIds = [...dbListingsIdsSet].filter((dbListing) => !xmlListingsIdsSet.has(dbListing));
-
-            const deletedListings = await this.dbMarketListings.find({ id: { $in: deletedListingsIds } });
-
-            return { deletedListingsIds, deletedListings };
+            return [...dbListingsIdsSet].filter((dbListing) => !xmlListingsIdsSet.has(dbListing));
         } catch (error) {
             consoleLog(`[${this.source}] Cannot fetch deleted listings from database.`);
             throw error;
         }
     }
 
-    async syncClosedListings(deletedListingsIds, deletedListings) {
-        let listingsToBeClosed = [];
-
+    async syncClosedListings(deletedListingsIds) {
         consoleLog(`[${this.source}] Synchronizing closed listings...`);
 
-        this.dbClosedListingsRecords = await this.dbClosedListings.find();
-
-        await this.handleDeletedListings(deletedListings, listingsToBeClosed);
-
-        const dbOperations = [this.dbMarketListings.deleteMany({ id: { $in: deletedListingsIds } })];
-
-        if (listingsToBeClosed.length > 0) {
-            this.dbClosedListingsRecords.push(...listingsToBeClosed);
-            dbOperations.push(this.dbClosedListings.insertMany(listingsToBeClosed));
-            this.listingsToBeClosedCount = listingsToBeClosed.length;
-        }
-
-        await Promise.all(dbOperations);
-
-        consoleLog(`[${this.source}] Synchronized closed listings.`);
-    }
-
-    async handleDeletedListings(deletedListings, listingsToBeClosed) {
-        for (let i = 0; i < deletedListings.length; i++) {
-            const similarClosedListing = await this.fetchSimilarClosedListing(deletedListings[i]);
-
-            if (!similarClosedListing) {
-                const closedListing = { ...deletedListings[i], closedDate: new Date(), source: this.source };
-                listingsToBeClosed.push(closedListing);
-                this.dbClosedListingsRecords.push(closedListing);
-                continue;
+        await this.listingsSubCollection.updateMany(
+            { id: { $in: deletedListingsIds } },
+            {
+                $set: {
+                    'versions.$[listingVersion].closeDate': getSyncDate(),
+                    'versions.$[listingVersion].sold': true,
+                },
+            },
+            {
+                arrayFilters: [{ 'listingVersion.closeDate': null }],
             }
-
-            await this.handleDeletedListingHavingSimilarClosedListing(deletedListings[i], similarClosedListing);
-        }
-    }
-
-    async fetchSimilarClosedListing(listing) {
-        for (let i = 0; i < this.dbClosedListingsRecords.length; i++) {
-            if (this.similarityDetector.checkListingsAreSimilar(listing, this.dbClosedListingsRecords[i])) {
-                return this.dbClosedListingsRecords[i];
-            }
-        }
-
-        return null;
-    }
-
-    async handleDeletedListingHavingSimilarClosedListing(deletedListing, similarClosedListing) {
-        const originalListing = this.similarityDetector.getOriginalListing(similarClosedListing, deletedListing);
-
-        if (originalListing.id === similarClosedListing.id) {
-            return;
-        }
-
-        const indexToUpdate = this.dbClosedListingsRecords.findIndex(
-            (listing) => listing.id === similarClosedListing.id
         );
 
-        originalListing.closedDate = new Date();
-        originalListing.source = this.source;
-        this.dbClosedListingsRecords[indexToUpdate] = originalListing;
-        await this.dbClosedListings.updateOne({ id: similarClosedListing.id }, { $set: originalListing });
+        consoleLog(`[${this.source}] Synchronizing closed live listings...`);
+
+        await this.liveListingsSubCollection.deleteMany({ id: { $in: deletedListingsIds } });
+
+        this.listingsClosedCount = deletedListingsIds.length;
+
+        consoleLog(`[${this.source}] Synchronized sold listings.`);
     }
 
-    async syncCurrentMarketListingsFromXml(xmlListings) {
-        let listingsToBeAdded = [];
+    async syncCurrentMarketListingsFromXml(liveListings) {
+        const liveListingsToCreate = [];
 
         consoleLog(`[${this.source}] Synchronizing current market listings...`);
 
-        await this.handleXmlListingsToSynchronize(xmlListings, listingsToBeAdded);
+        await this.handleLiveListingsToSynchronize(liveListings, liveListingsToCreate);
 
-        if (listingsToBeAdded.length > 0) {
-            this.listingsToBeAddedCount = listingsToBeAdded.length;
-            await this.dbMarketListings.insertMany(listingsToBeAdded);
+        if (liveListingsToCreate.length > 0) {
+            await this.liveListingsSubCollection.insertMany(liveListingsToCreate);
         }
 
         consoleLog(`[${this.source}] Synchronized current market listings.`);
     }
 
-    async handleXmlListingsToSynchronize(xmlListings, listingsToBeAdded) {
-        const dbMarketListingsRecords = await this.dbMarketListings.find({}, { _id: 0, id: 1, lastModified: 1 });
-        const dbMarketListingsMap = indexObjectsByKey(dbMarketListingsRecords, 'id');
-        const dbMarketListingsIds = new Set(Object.keys(dbMarketListingsMap));
+    async handleLiveListingsToSynchronize(liveListings, liveListingsToCreate) {
+        const dbListingsRecords = await this.liveListingsSubCollection.find({}, { _id: 0, id: 1, lastModified: 1 });
+        const dbListingsMap = indexObjectsByKey(dbListingsRecords, 'id');
+        const dbListingsIds = new Set(Object.keys(dbListingsMap));
 
-        for (let i = 0; i < xmlListings.length; i++) {
+        for (let i = 0; i < liveListings.length; i++) {
             try {
-                const listingId = xmlListings[i].id;
-                const isOnMarket = dbMarketListingsIds.has(listingId);
-                if (!isOnMarket) {
-                    await this.createMarketListing(xmlListings[i], listingsToBeAdded);
-                    consoleLog(`[${this.source}] Fetched and added listing to database. Waiting...`);
+                const liveListing = liveListings[i];
+                const listingId = liveListing.id;
+                const wasLiveBefore = dbListingsIds.has(listingId);
+
+                if (!wasLiveBefore) {
+                    await this.createMarketListing(liveListing);
+                    liveListingsToCreate.push(liveListing);
+                    consoleLog(`[${this.source}] Fetched and created listing in database. Waiting...`);
                     await delay(getRandomRestingDelay());
                     continue;
                 }
 
-                const marketListing = dbMarketListingsMap[listingId];
-                if (marketListing.lastModified < xmlListings[i].lastModified) {
-                    await this.updateMarketListing(xmlListings[i]);
+                const dbListing = dbListingsMap[listingId];
+                if (dbListing.lastModified < liveListing.lastModified) {
+                    await this.updateMarketListing(liveListing);
+                    await this.liveListingsSubCollection.updateOne({ id: listingId }, { $set: liveListing });
                     consoleLog(`[${this.source}] Fetched and updated listing in database. Waiting...`);
                     await delay(getRandomRestingDelay());
                 }
@@ -154,47 +126,46 @@ export class IndexSynchronizer extends IndexBuilder {
         }
     }
 
-    async createMarketListing(listingShortData, newMarketListings) {
-        let newListingData;
+    async createMarketListing(liveListing) {
+        let versionData;
 
         try {
-            consoleLog(`[${this.source}] Fetching to create listing from: ${listingShortData.url}`);
-            newListingData = await this.fetchListingDataFromPage(listingShortData);
+            consoleLog(`[${this.source}] Fetching to create listing from: ${liveListing.url}`);
+            versionData = await this.fetchVersionDataFromLiveListing(liveListing);
         } catch (error) {
-            consoleLog(`[${this.source}] Cannot fetch new listing data from: ${listingShortData.url}`);
+            consoleLog(`[${this.source}] Cannot fetch new listing data from: ${liveListing.url}`);
             throw error;
         }
 
-        newMarketListings.push(newListingData);
+        await this.createNewListingWithApartmentHandlingFromVersionData(versionData);
+        this.listingsAddedCount++;
     }
 
-    async updateMarketListing(listingShortData) {
-        let listingData;
+    async updateMarketListing(liveListing) {
+        let newVersionData;
 
         try {
-            consoleLog(`[${this.source}] Fetching to update listing from: ${listingShortData.url}`);
-            listingData = await this.fetchListingDataFromPage(listingShortData);
+            consoleLog(`[${this.source}] Fetching to update listing from: ${liveListing.url}`);
+            newVersionData = await this.fetchVersionDataFromLiveListing(liveListing);
         } catch (error) {
-            consoleLog(`[${this.source}] Cannot fetch updated listing data from: ${listingShortData.url}`);
+            consoleLog(`[${this.source}] Cannot fetch updated listing data from: ${liveListing.url}`);
             throw error;
         }
 
-        this.listingsToBeUpdatedCount++;
-        await this.dbMarketListings.updateOne({ id: listingData.id }, { $set: listingData });
+        const hasUpdatedListing = await this.updateListingWithApartmentHandlingUsingNewVersionData(newVersionData);
+
+        if (hasUpdatedListing) {
+            this.listingsUpdatedCount++;
+        }
     }
 
     async insertTodaySyncStats() {
-        const today = new Date();
-        const month = today.getMonth() + 1;
-        const day = today.getDate();
-        const syncDate = new Date(`2022-${month}-${day} ${SYNCHRONIZATION_TIME}`);
-
         await this.dbSyncStats.insertOne({
             source: this.source,
-            date: syncDate,
-            closedListingsCount: this.listingsToBeClosedCount,
-            newListingsCount: this.listingsToBeAddedCount,
-            updatedListingsCount: this.listingsToBeUpdatedCount,
+            date: getSyncDate(),
+            closedListingsCount: this.listingsClosedCount,
+            newListingsCount: this.listingsAddedCount,
+            updatedListingsCount: this.listingsUpdatedCount,
         });
     }
 }

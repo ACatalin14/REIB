@@ -1,13 +1,16 @@
 export const RESTING_DELAY_MIN = 1000; // 1 seconds
-export const RESTING_DELAY_MAX = 4000; // 4 seconds
+export const RESTING_DELAY_MAX = 3000; // 3 seconds
 export const RETRY_IMAGES_FETCH_DELAY = 65000; // 65 seconds
+export const RETRY_IMAGES_URLS_GET_DELAY = 1000; // 1 seconds
 export const RETRY_DB_OPERATION_DELAY = 30000; // 30 seconds
 export const RETRY_XML_FETCH_DELAY = 5000; // 5 seconds
 export const RETRY_CREATE_BROWSER_DELAY = 1000; // 1 second
 
-export const SYNCHRONIZATION_TIME = '14:00';
+export const SYNCHRONIZATION_TIME = '22:00';
 
-// Number of similar images between two listings so they can be considered similar listings
+export const SIMILARITY_THRESHOLD_TYPE_FIXED = 'fixed';
+export const SIMILARITY_THRESHOLD_TYPE_RELATIVE = 'relative';
+// Number of similar images between two listings so they can be considered similar listings, when fixed threshold is considered
 export const SIMILARITY_IMAGES_COUNT_THRESHOLD = 3;
 // Percentage threshold between two image hashes so they can be considered similar images
 export const SIMILARITY_HASH_THRESHOLD = 0.9;
@@ -22,8 +25,9 @@ export const DB_REIB = 'reib';
 export const DB_REIB_TEST = 'reib-test';
 export const DB_COLLECTION_CLOSED_LISTINGS = 'closedListings';
 export const DB_COLLECTION_DISTINCT_LISTINGS = 'distinctListings';
-export const DB_COLLECTION_IMOBILIARE = 'imobiliareRoListings';
-export const DB_COLLECTION_OLX = 'olxRoListings';
+export const DB_COLLECTION_APARTMENTS = 'apartments';
+export const DB_COLLECTION_LISTINGS = 'listings';
+export const DB_COLLECTION_LIVE_LISTINGS = 'liveListings';
 export const DB_COLLECTION_STORIA = 'storiaRoListings';
 export const DB_COLLECTION_ANUNTUL = 'anuntulRoListings';
 export const DB_COLLECTION_SYNC_STATS = 'syncStats';
@@ -33,7 +37,7 @@ export const DB_COLLECTION_DISTINCT_LISTINGS_STATS = 'distinctListingsStats';
 
 // TODO: Update this array as the implementation goes on
 export const SOURCE_TO_DB_COLLECTION_MAP = {
-    [SOURCE_IMOBILIARE_RO]: DB_COLLECTION_IMOBILIARE,
+    // [SOURCE_IMOBILIARE_RO]: DB_COLLECTION_IMOBILIARE,
 };
 
 export const IMAGES_FETCH_MODE_PARALLEL = 'parallel';
@@ -87,3 +91,8 @@ export const REFERRERS_IMOBILIARE_RO = [
 export const LISTING_PRICE_MIN_THRESHOLD = 10000; // Minimum amount of Euros a listing must have to be saved in database
 export const LISTING_PRICE_MAX_SUS_THRESHOLD = 5000000; // Maximum amount of Euros a listing can have without roomsCount check
 export const LISTING_ROOMS_COUNT_SUS_THRESHOLD = 8;
+export const LISTING_OLD_APARTMENT_MAX_YEAR = 2020; // Maximum construction year of a supposed old apartment
+export const TVA_5_MAX_SURFACE = 120; // Maximum surface an apartment can have to get only 5% TVA
+export const TVA_5_MAX_PRICE = 120000; //  Maximum price (euros) an apartment can have to get only 5% TVA
+export const TVA_5 = 0.05;
+export const TVA_19 = 0.19;

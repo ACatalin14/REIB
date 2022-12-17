@@ -2,22 +2,25 @@ import { IndexSynchronizerImobiliareRo } from './IndexSynchronizerImobiliareRo.j
 import { DataExtractorImobiliareRo } from '../../DataExtractors/DataExtractorImobiliareRo.js';
 import { SmartRequester } from '../../Helpers/SmartRequester.js';
 import {
-    DB_COLLECTION_CLOSED_LISTINGS,
-    DB_COLLECTION_IMOBILIARE,
     SOURCE_IMOBILIARE_RO,
     REFERER_IMOBILIARE_RO,
     REFERRERS_IMOBILIARE_RO,
     DB_COLLECTION_SYNC_STATS,
+    DB_COLLECTION_APARTMENTS,
+    DB_COLLECTION_LISTINGS,
+    DB_COLLECTION_LIVE_LISTINGS,
 } from '../../Constants.js';
 import { ImageHasher } from '../../Helpers/ImageHasher.js';
 import { DbCollection } from '../../DbLayer/DbCollection.js';
 import { DbClient } from '../../DbLayer/DbClient.js';
 import { consoleLog } from '../../Helpers/Utils.js';
 import { SimilarityDetector } from '../../Helpers/SimilarityDetector.js';
+import { DbSubCollection } from '../../DbLayer/DbSubCollection.js';
 
 export class MainIndexSynchronizer {
     constructor() {
         this.dbClient = null;
+        this.apartmentsCollection = null;
     }
 
     async sync() {
@@ -25,6 +28,8 @@ export class MainIndexSynchronizer {
 
         consoleLog('[main-synchronizer] Connecting to the database...');
         await this.dbClient.connect();
+
+        this.apartmentsCollection = new DbCollection(DB_COLLECTION_APARTMENTS, this.dbClient);
 
         await this.syncIndexImobiliareRo();
         // await this.syncIndexOlxRo();
@@ -38,24 +43,29 @@ export class MainIndexSynchronizer {
     }
 
     async syncIndexImobiliareRo() {
-        const dbCollection = new DbCollection(DB_COLLECTION_IMOBILIARE, this.dbClient);
+        const listingsSubCollection = new DbSubCollection(DB_COLLECTION_LISTINGS, this.dbClient, {
+            source: SOURCE_IMOBILIARE_RO,
+        });
+        const liveListingsSubCollection = new DbSubCollection(DB_COLLECTION_LIVE_LISTINGS, this.dbClient, {
+            source: SOURCE_IMOBILIARE_RO,
+        });
         const dataExtractor = new DataExtractorImobiliareRo();
         const imageHasher = new ImageHasher();
         const similarityDetector = new SimilarityDetector(imageHasher);
         const smartRequester = new SmartRequester(REFERRERS_IMOBILIARE_RO, REFERER_IMOBILIARE_RO, {
             authority: 'www.imobiliare.ro',
         });
-        const dbClosedListings = new DbCollection(DB_COLLECTION_CLOSED_LISTINGS, this.dbClient);
         const dbSyncStats = new DbCollection(DB_COLLECTION_SYNC_STATS, this.dbClient);
 
         const synchronizer = new IndexSynchronizerImobiliareRo(
             SOURCE_IMOBILIARE_RO,
-            dbCollection,
+            this.apartmentsCollection,
+            listingsSubCollection,
+            liveListingsSubCollection,
             dataExtractor,
             smartRequester,
             imageHasher,
             similarityDetector,
-            dbClosedListings,
             dbSyncStats
         );
 

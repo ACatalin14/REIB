@@ -12,11 +12,11 @@ export class IndexInitializerImobiliareRo extends IndexInitializer {
         try {
             consoleLog(`[${this.source}] Initialization started.`);
 
-            const xmlListings = await this.fetchListingsFromXml(URL_XML_IMOBILIARE_LISTINGS_BUCHAREST);
-            const xmlListingsToInit = await this.getXmlListingsToInit(xmlListings);
-            await this.prepareListingsToInit(xmlListingsToInit);
-
-            await this.handleXmlListingsToInitialize(xmlListingsToInit);
+            const xmlListings = await this.fetchLiveListingsFromXml(URL_XML_IMOBILIARE_LISTINGS_BUCHAREST);
+            const initializedListingsIdsSet = await this.fetchInitializedListingsIdsSet();
+            const liveListingsToInit = this.getLiveListingsToInitFromXml(xmlListings, initializedListingsIdsSet);
+            await this.prepareDbForLiveListingsInit(liveListingsToInit, initializedListingsIdsSet);
+            await this.handleLiveListingsToInitialize(liveListingsToInit);
 
             consoleLog(`[${this.source}] Initialization complete.`);
         } catch (error) {

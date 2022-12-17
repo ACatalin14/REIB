@@ -7,56 +7,50 @@ export class IndexInitializer extends IndexBuilder {
         // To be implemented
     }
 
-    async getXmlListingsToInit(xmlListings) {
-        const initializedListingsIds = await this.dbMarketListings.find(
-            { price: { $exists: true } },
-            { projection: { _id: 0, id: 1 } }
-        );
-
-        const initializedListingsIdsSet = new Set(mapObjectsToValueOfKey(initializedListingsIds, 'id'));
-
-        return xmlListings.filter((xmlListing) => !initializedListingsIdsSet.has(xmlListing.id));
+    async fetchInitializedListingsIdsSet() {
+        const initializedListingsRecords = await this.listingsSubCollection.find({}, { projection: { _id: 0, id: 1 } });
+        return new Set(mapObjectsToValueOfKey(initializedListingsRecords, 'id'));
     }
 
-    async prepareListingsToInit(xmlListings) {
-        consoleLog(`[${this.source}] Preparing ${xmlListings.length} listings to initialize...`);
+    getLiveListingsToInitFromXml(xmlListings, initializedListingsIdsSet) {
+        return xmlListings
+            .filter((xmlListing) => !initializedListingsIdsSet.has(xmlListing.id))
+            .map((listing) => ({
+                id: listing.id,
+                url: listing.url,
+                lastModified: listing.lastModified,
+            }));
+    }
+
+    async prepareDbForLiveListingsInit(liveListings, initializedListingsIdsSet) {
+        consoleLog(`[${this.source}] Preparing database for ${liveListings.length} listings to initialize...`);
 
         // Delete uninitialized listings
-        await this.dbMarketListings.deleteMany({ price: { $exists: false } });
+        await this.liveListingsSubCollection.deleteMany({ id: { $nin: [...initializedListingsIdsSet] } });
 
-        // Insert listings to initialize
-        const shortListingsToInsert = xmlListings.map((listing) => ({
-            id: listing.id,
-            lastModified: listing.lastModified,
-        }));
-
-        await this.dbMarketListings.insertMany(shortListingsToInsert);
+        // Insert new listings to initialize
+        await this.liveListingsSubCollection.insertMany(liveListings);
 
         consoleLog(`[${this.source}] Listings prepared for initialization.`);
     }
 
-    async handleXmlListingsToInitialize(xmlListings) {
-        for (let i = 0; i < xmlListings.length; i++) {
-            let listingData;
+    async handleLiveListingsToInitialize(liveListings) {
+        for (let i = 0; i < liveListings.length; i++) {
+            let versionData;
 
             try {
-                consoleLog(`[${this.source}] Fetching listing [${i + 1}] from: ${xmlListings[i].url}`);
-                listingData = await this.fetchListingDataFromPage(xmlListings[i]);
+                consoleLog(`[${this.source}] Fetching listing [${i + 1}] from: ${liveListings[i].url}`);
+                versionData = await this.fetchVersionDataFromLiveListing(liveListings[i]);
             } catch (error) {
                 consoleLog(`[${this.source}] Cannot fetch listing data.`);
                 consoleLog(error);
-                await this.dbMarketListings.deleteOne({ id: xmlListings[i].id });
                 continue;
             }
 
-            try {
-                await this.dbMarketListings.updateOne({ id: listingData.id }, { $set: listingData });
-                consoleLog(`[${this.source}] Fetched and saved listing successfully. Waiting...`);
-                await delay(getRandomRestingDelay());
-            } catch (error) {
-                consoleLog(`[${this.source}] Cannot update listing data from: ${xmlListings[i].url}`);
-                consoleLog(error);
-            }
+            await this.createNewListingWithApartmentHandlingFromVersionData(versionData);
+
+            consoleLog(`[${this.source}] Fetched and saved listing successfully. Waiting...`);
+            await delay(getRandomRestingDelay());
         }
     }
 }

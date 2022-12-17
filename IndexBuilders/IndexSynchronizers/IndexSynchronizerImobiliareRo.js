@@ -12,13 +12,13 @@ export class IndexSynchronizerImobiliareRo extends IndexSynchronizer {
         try {
             consoleLog(`[${this.source}] Synchronization started.`);
 
-            const xmlListings = await this.fetchListingsFromXml(URL_XML_IMOBILIARE_LISTINGS_BUCHAREST);
+            const liveListings = await this.fetchLiveListingsFromXml(URL_XML_IMOBILIARE_LISTINGS_BUCHAREST);
 
-            const { deletedListingsIds, deletedListings } = await this.fetchMissingMarketListingsFromXml(xmlListings);
+            const deletedListingsIds = await this.fetchMissingLiveListingsFromXml(liveListings);
 
-            await this.syncClosedListings(deletedListingsIds, deletedListings);
+            await this.syncClosedListings(deletedListingsIds);
 
-            await this.syncCurrentMarketListingsFromXml(xmlListings);
+            await this.syncCurrentMarketListingsFromXml(liveListings);
 
             await this.insertTodaySyncStats();
 
