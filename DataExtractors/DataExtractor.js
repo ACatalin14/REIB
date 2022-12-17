@@ -59,7 +59,7 @@ export class DataExtractor {
             return true;
         }
 
-        const years = constructionYear.match(/[0-9]{4}/g);
+        const years = constructionYear ? constructionYear.match(/[0-9]{4}/g) : null;
 
         if (!years) {
             // Any listing without mentioned TVA and no construction year usually presents an old apartment
