@@ -13,7 +13,7 @@ import { ImageHasher } from '../../Helpers/ImageHasher.js';
 import { DbCollection } from '../../DbLayer/DbCollection.js';
 import { DbClient } from '../../DbLayer/DbClient.js';
 import { consoleLog } from '../../Helpers/Utils.js';
-import { DbSubCollection } from '../../DbLayer/DbSubcollection.js';
+import { DbSubCollection } from '../../DbLayer/DbSubCollection.js';
 import { SimilarityDetector } from '../../Helpers/SimilarityDetector.js';
 
 export class MainIndexInitializer {
