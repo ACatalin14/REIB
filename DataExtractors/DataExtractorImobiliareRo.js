@@ -4,8 +4,9 @@ import {
     LISTING_PRICE_MAX_SUS_THRESHOLD,
     LISTING_PRICE_MIN_THRESHOLD,
     LISTING_ROOMS_COUNT_SUS_THRESHOLD,
+    RETRY_IMAGES_URLS_GET_DELAY,
 } from '../Constants.js';
-import { consoleLog } from '../Helpers/Utils.js';
+import { callUntilSuccess, consoleLog } from '../Helpers/Utils.js';
 
 export class DataExtractorImobiliareRo extends DataExtractor {
     setDataSource(html) {
@@ -252,6 +253,16 @@ export class DataExtractorImobiliareRo extends DataExtractor {
             '#galerie_detalii > div.swiper.main_slider > div.swiper-wrapper > div > a > img.front_image'
         );
 
+        return await callUntilSuccess(
+            this.extractImageUrlsFromIframes.bind(this),
+            [browserPage],
+            `[${this.source}] Cannot extract image URL's from iframes.`,
+            RETRY_IMAGES_URLS_GET_DELAY,
+            3
+        );
+    }
+
+    async extractImageUrlsFromIframes(browserPage) {
         let imageUrls = await this.extractImageUrlsFromIframe('#modal-galerie', browserPage);
 
         if (!imageUrls.length) {

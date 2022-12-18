@@ -1,6 +1,6 @@
 import { callUntilSuccess, consoleLog, getSyncDate } from '../Helpers/Utils.js';
 import { load } from 'cheerio';
-import { RETRY_IMAGES_FETCH_DELAY, RETRY_IMAGES_URLS_GET_DELAY, RETRY_XML_FETCH_DELAY } from '../Constants.js';
+import { RETRY_IMAGES_FETCH_DELAY, RETRY_XML_FETCH_DELAY } from '../Constants.js';
 
 export class IndexBuilder {
     constructor(
@@ -102,13 +102,7 @@ export class IndexBuilder {
 
             consoleLog(`[${this.source}] Fetching listing image urls...`);
 
-            const imageUrls = await callUntilSuccess(
-                this.dataExtractor.extractImageUrls.bind(this.dataExtractor),
-                [browserPage],
-                `[${this.source}] Cannot extract image URL's from listing.`,
-                RETRY_IMAGES_URLS_GET_DELAY,
-                2
-            );
+            const imageUrls = await this.dataExtractor.extractImageUrls(browserPage);
 
             return {
                 ...versionDetails,
