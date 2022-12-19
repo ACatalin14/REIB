@@ -210,7 +210,15 @@ export class DataExtractorImobiliareRo extends DataExtractor {
         const villageLength = this.dataLayerText.substring(villageStartPos).indexOf("'");
         const village = this.dataLayerText.substring(villageStartPos, villageStartPos + villageLength);
 
-        return village === '' ? null : village;
+        if (village !== '') {
+            return village;
+        }
+
+        const cityStartPos = this.dataLayerText.indexOf('sRegionCity') + 11 + 4;
+        const cityLength = this.dataLayerText.substring(cityStartPos).indexOf("'");
+        const city = this.dataLayerText.substring(cityStartPos, cityStartPos + cityLength);
+
+        return city !== '' ? city : null;
     }
 
     extractConstructionYear() {
