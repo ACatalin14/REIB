@@ -198,11 +198,19 @@ export class DataExtractorImobiliareRo extends DataExtractor {
     }
 
     extractZone() {
-        const zoneStartPos = this.dataLayerText.indexOf('propertyArea') + 12 + 4;
-        const zoneLength = this.dataLayerText.substring(zoneStartPos).indexOf("'");
-        const zone = this.dataLayerText.substring(zoneStartPos, zoneStartPos + zoneLength);
+        const areaStartPos = this.dataLayerText.indexOf('propertyArea') + 12 + 4;
+        const areaLength = this.dataLayerText.substring(areaStartPos).indexOf("'");
+        const area = this.dataLayerText.substring(areaStartPos, areaStartPos + areaLength);
 
-        return zone === '' ? null : zone;
+        if (area !== '') {
+            return area;
+        }
+
+        const villageStartPos = this.dataLayerText.indexOf('sRegionVillage') + 14 + 4;
+        const villageLength = this.dataLayerText.substring(villageStartPos).indexOf("'");
+        const village = this.dataLayerText.substring(villageStartPos, villageStartPos + villageLength);
+
+        return village === '' ? null : village;
     }
 
     extractConstructionYear() {
