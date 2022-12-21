@@ -9,8 +9,10 @@
 
 import { config } from 'dotenv';
 import { MainIndexSynchronizer } from '../IndexBuilders/IndexSynchronizers/MainIndexSynchronizer.js';
+import { setSyncDateForToday } from '../Helpers/Utils.js';
 
 config(); // Use Environment Variables
+setSyncDateForToday(); // Set SYNC_DATE Env Var.
 
 async function main() {
     const mainIndexSynchronizer = new MainIndexSynchronizer();

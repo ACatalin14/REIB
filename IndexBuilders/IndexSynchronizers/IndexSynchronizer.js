@@ -34,6 +34,7 @@ export class IndexSynchronizer extends IndexBuilder {
         this.listingsClosedCount = 0;
         this.listingsAddedCount = 0;
         this.listingsUpdatedCount = 0;
+        this.linkedApartmentsUpdatedCount = 0;
     }
 
     async sync() {
@@ -159,6 +160,38 @@ export class IndexSynchronizer extends IndexBuilder {
         }
     }
 
+    async updateListingWithApartmentHandlingUsingNewVersionData(newVersionData) {
+        const listing = await this.listingsSubCollection.findOne({ id: newVersionData.id }, {});
+        const apartment = await this.apartmentsCollection.findOne({ _id: listing.apartment }, {});
+
+        if (!this.listingVersionSignificantlyChanged(listing, newVersionData)) {
+            consoleLog(`[${this.source}] Listing has not significantly changed. No need for update.`);
+            return false;
+        }
+
+        if (newVersionData.roomsCount !== apartment.roomsCount || newVersionData.hasNewApartment !== apartment.isNew) {
+            // Rare case: One of the most important attributes has changed, so must update linked apartment
+            consoleLog(`[${this.source}] Updating linked apartment for existing listing...`);
+            await this.updateListingWhenLinkedApartmentChanges(listing, apartment, newVersionData);
+            this.linkedApartmentsUpdatedCount++;
+            return true;
+        }
+
+        // Last version is referring to the same apartment as it was referring before the listing's update
+        const updatedListing = this.getUpdatedListingWithNewVersionData(listing, newVersionData);
+
+        await this.listingsSubCollection.updateOne({ id: updatedListing.id }, { $set: updatedListing });
+
+        const updatedApartmentImages = this.similarityDetector.getUnionBetweenHashesLists(
+            apartment.images,
+            updatedListing.images
+        );
+
+        await this.updateApartmentById(updatedListing.apartment, { images: updatedApartmentImages });
+
+        return true;
+    }
+
     async insertTodaySyncStats() {
         await this.dbSyncStats.insertOne({
             source: this.source,
@@ -166,6 +199,7 @@ export class IndexSynchronizer extends IndexBuilder {
             closedListingsCount: this.listingsClosedCount,
             newListingsCount: this.listingsAddedCount,
             updatedListingsCount: this.listingsUpdatedCount,
+            updatedLinkedApartmentsCount: this.linkedApartmentsUpdatedCount,
         });
     }
 }

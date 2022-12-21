@@ -1,10 +1,6 @@
 import {
+    DB_COLLECTION_STATS,
     SOURCE_TO_DB_COLLECTION_MAP,
-    DB_COLLECTION_MARKET_STATS,
-    DB_COLLECTION_CLOSED_LISTINGS_STATS,
-    DB_COLLECTION_CLOSED_LISTINGS,
-    DB_COLLECTION_DISTINCT_LISTINGS_STATS,
-    DB_COLLECTION_DISTINCT_LISTINGS,
 } from '../Constants.js';
 import { DbClient } from '../DbLayer/DbClient.js';
 import { consoleLog } from '../Helpers/Utils.js';
@@ -13,13 +9,9 @@ import { Int32 } from 'mongodb';
 
 export class StatsMaker {
     constructor() {
-        // This class is meant to be used only on 1st of any month!
-        const yesterday = new Date(new Date() - 24 * 60 * 60 * 1000);
-        const month = yesterday.getMonth() + 1;
-        const year = yesterday.getFullYear();
-
-        this.referenceMonth = `${month}.${year}`;
+        this.referenceMonth = process.env.STATS_REFERENCE_MONTH;
         this.dbClient = null;
+        this.statsCollection = null;
     }
 
     async makeStats() {
@@ -30,9 +22,11 @@ export class StatsMaker {
         consoleLog('[stats] Connecting to the database...');
         await this.dbClient.connect();
 
-        await this.makeMarketStats();
-        await this.makeClosedListingsStats();
-        await this.makeDistinctListingsStats();
+        this.statsCollection = new DbCollection(DB_COLLECTION_STATS, this.dbClient);
+
+        await this.makeListingsStats();
+        await this.makeApartmentsStats();
+        await this.makeSoldApartmentsStats();
 
         consoleLog('[stats] Disconnecting from the database...');
         await this.dbClient.disconnect();
@@ -40,51 +34,22 @@ export class StatsMaker {
         consoleLog('[stats] Computing end of month statistics finished.');
     }
 
-    async makeMarketStats() {
-        consoleLog('[stats] Computing market statistics...');
+    async makeListingsStats() {
+        consoleLog('[stats] Computing listings statistics...');
 
-        const marketStatsCollection = new DbCollection(DB_COLLECTION_MARKET_STATS, this.dbClient);
-        const avgResults = [];
-
-        avgResults.push(...(await this.getResultsForMarketCollections()));
-
-        for (const [source, collection] of Object.entries(SOURCE_TO_DB_COLLECTION_MAP)) {
-            const listingsCollection = new DbCollection(collection, this.dbClient);
-            avgResults.push(...(await this.getResultsForCollection(source, listingsCollection)));
-            avgResults.push(...(await this.getResultsForCollectionGroupedByRoomsCount(source, listingsCollection)));
-        }
-
-        await marketStatsCollection.insertMany(avgResults);
+        // TODO: Make listings stats
     }
 
-    async makeClosedListingsStats() {
+    async makeSoldApartmentsStats() {
         consoleLog('[stats] Computing closed listings statistics...');
 
-        const closedListingsCollection = new DbCollection(DB_COLLECTION_CLOSED_LISTINGS, this.dbClient);
-        const avgResults = [];
-        const pipelines = this.getAveragingPipelinesForMixedCollection();
-
-        for (let pipeline of pipelines) {
-            avgResults.push(...(await closedListingsCollection.aggregate(pipeline)));
-        }
-
-        const closedListingsStatsCollection = new DbCollection(DB_COLLECTION_CLOSED_LISTINGS_STATS, this.dbClient);
-        await closedListingsStatsCollection.insertMany(avgResults);
+        // TODO: Make sold apartments stats
     }
 
-    async makeDistinctListingsStats() {
+    async makeApartmentsStats() {
         consoleLog('[stats] Computing distinct listings statistics...');
 
-        const distinctListingsCollection = new DbCollection(DB_COLLECTION_DISTINCT_LISTINGS, this.dbClient);
-        const pipelines = this.getAveragingPipelinesForMixedCollection();
-        const avgResults = [];
-
-        for (let pipeline of pipelines) {
-            avgResults.push(...(await distinctListingsCollection.aggregate(pipeline)));
-        }
-
-        const distinctListingsStatsCollection = new DbCollection(DB_COLLECTION_DISTINCT_LISTINGS_STATS, this.dbClient);
-        await distinctListingsStatsCollection.insertMany(avgResults);
+        // TODO: Make apartments stats
     }
 
     getAveragingPipelinesForMixedCollection() {

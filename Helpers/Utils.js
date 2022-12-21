@@ -95,12 +95,15 @@ export async function callUntilSuccess(method, args, errorMessage, retryTimeMs, 
     }
 }
 
-// TODO: Use a env variable SYNC_DATE and set it everytime when syncIndex starts running
-export function getSyncDate() {
+export function setSyncDateForToday() {
     const today = new Date();
     const year = today.getFullYear();
     const month = today.getMonth() + 1;
     const day = today.getDate();
 
-    return new Date(`${year}-${month}-${day} ${SYNCHRONIZATION_TIME}`);
+    process.env.SYNC_DATE = new Date(`${year}-${month}-${day} ${SYNCHRONIZATION_TIME}`);
+}
+
+export function getSyncDate() {
+    return process.env.SYNC_DATE;
 }

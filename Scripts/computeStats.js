@@ -1,7 +1,7 @@
 /**
- * This script is destined to be run only once a month, at the end of the month,
- * after all of the indexes have been computed, in order to make some monthly
- * statistics about the market listings, closed listings, and distinct listings.
+ * This script can be run anytime on demand, in order to make some statistics of all
+ * the listings, apartments and sold apartments, for the reference month, specified in
+ * the STATS_REFERENCE_MONTH environment variable in MM.YYYY format (e.g. "01.2023")
  */
 
 import { config } from 'dotenv';

@@ -17,16 +17,6 @@ export class SimilarityDetector {
         return (hashSize * 8 - hammingDistance) / (hashSize * 8);
     }
 
-    checkListingsAreSimilar(listing1, listing2) {
-        // Add safe guard for number of rooms. If different count of rooms, there is no need to look at the images
-        if (listing1.roomsCount !== listing2.roomsCount) {
-            return false;
-        }
-
-        // Apartments have same number of rooms, should check their images now
-        return this.checkSimilarityForHashesLists(listing1.images, listing2.images);
-    }
-
     checkListingRefersToApartment(listing, apartment) {
         // Safe guard for number of rooms. If different count of rooms, there is no need to look at the images
         if (listing.roomsCount !== apartment.roomsCount) {
@@ -153,34 +143,5 @@ export class SimilarityDetector {
 
     getUnionBetweenHashesLists(list1, list2) {
         return [...list1, ...this.getDifferenceBetweenHashesLists(list2, list1)];
-    }
-
-    getOriginalListing(listing1, listing2) {
-        // Mainly look at the listings' prices, and select the cheaper one (this is what the buyers look into the most)
-        if (listing1.price < listing2.price) {
-            return listing1;
-        }
-
-        if (listing2.price < listing1.price) {
-            return listing2;
-        }
-
-        // When prices are equal, look at the surface, and select the bigger one by this criteria
-        if (listing1.surface > listing2.surface) {
-            return listing1;
-        }
-
-        if (listing2.surface > listing1.surface) {
-            return listing2;
-        }
-
-        // In the rare cases when both prices and surfaces are the same, select the one with more images
-        if (listing1.images.length >= listing2.images.length) {
-            // Also return the first listing when listings are truly equal
-            return listing1;
-        }
-
-        // TODO: Look at createdAt as well as a last criteria!
-        return listing2;
     }
 }

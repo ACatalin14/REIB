@@ -20,20 +20,17 @@ export const DEFAULT_HASH_SIZE = 16; // Use powers of 2
 export const SOURCE_IMOBILIARE_RO = 'imobiliare.ro';
 export const SOURCE_OLX_RO = 'olx.ro';
 
-// TODO: Adapt collections to the new strategy
+export const INDEX_TYPE_LISTINGS = 'listings';
+export const INDEX_TYPE_APARTMENTS = 'apartments';
+export const INDEX_TYPE_SOLD_APARTMENTS = 'soldApartments';
+
 export const DB_REIB = 'reib';
 export const DB_REIB_TEST = 'reib-test';
-export const DB_COLLECTION_CLOSED_LISTINGS = 'closedListings';
-export const DB_COLLECTION_DISTINCT_LISTINGS = 'distinctListings';
 export const DB_COLLECTION_APARTMENTS = 'apartments';
 export const DB_COLLECTION_LISTINGS = 'listings';
 export const DB_COLLECTION_LIVE_LISTINGS = 'liveListings';
-export const DB_COLLECTION_STORIA = 'storiaRoListings';
-export const DB_COLLECTION_ANUNTUL = 'anuntulRoListings';
 export const DB_COLLECTION_SYNC_STATS = 'syncStats';
-export const DB_COLLECTION_MARKET_STATS = 'marketStats';
-export const DB_COLLECTION_CLOSED_LISTINGS_STATS = 'closedListingsStats';
-export const DB_COLLECTION_DISTINCT_LISTINGS_STATS = 'distinctListingsStats';
+export const DB_COLLECTION_STATS = 'stats';
 
 // TODO: Update this array as the implementation goes on
 export const SOURCE_TO_DB_COLLECTION_MAP = {
@@ -52,7 +49,7 @@ export const HTTP_STATUS_CODE_OK = 200;
 
 export const PROXIES_COUNT = 100;
 
-// Working proxies available by webshare.io
+// Working proxies available, as given by webshare.io
 export const WORKING_PROXIES = [
     '185.199.229.156:7492:koqpsbza:vmlw1cx5p6lc',
     '185.199.228.220:7300:koqpsbza:vmlw1cx5p6lc',
