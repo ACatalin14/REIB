@@ -101,9 +101,9 @@ export function setSyncDateForToday() {
     const month = today.getMonth() + 1;
     const day = today.getDate();
 
-    process.env.SYNC_DATE = new Date(`${year}-${month}-${day} ${SYNCHRONIZATION_TIME}`);
+    process.env.SYNC_DATE = `${year}-${month}-${day} ${SYNCHRONIZATION_TIME}`;
 }
 
 export function getSyncDate() {
-    return process.env.SYNC_DATE;
+    return new Date(process.env.SYNC_DATE);
 }

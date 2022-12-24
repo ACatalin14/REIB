@@ -101,6 +101,8 @@ export class IndexSynchronizer extends IndexBuilder {
 
         for (let i = 0; i < liveListings.length; i++) {
             try {
+                consoleLog(`[${this.source}] Checking listing ${i+1} of ${liveListings.length}...`);
+
                 const liveListing = liveListings[i];
                 const listingId = liveListing.id;
                 const wasLiveBefore = dbListingsIds.has(listingId);
