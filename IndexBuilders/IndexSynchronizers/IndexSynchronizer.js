@@ -101,7 +101,7 @@ export class IndexSynchronizer extends IndexBuilder {
 
         for (let i = 0; i < liveListings.length; i++) {
             try {
-                consoleLog(`[${this.source}] Checking listing ${i+1} of ${liveListings.length}...`);
+                consoleLog(`[${this.source}] Checking listing ${i + 1} of ${liveListings.length}...`);
 
                 const liveListing = liveListings[i];
                 const listingId = liveListing.id;
@@ -167,7 +167,7 @@ export class IndexSynchronizer extends IndexBuilder {
                 consoleLog(`[${this.source}] Marking existing listing as sold...`);
 
                 await this.listingsSubCollection.updateOne(
-                    { id: liveListing.id },
+                    { id: liveListing.id, 'versions.sold': { $ne: true } },
                     {
                         $set: {
                             'versions.$[listingVersion].closeDate': getSyncDate(),
@@ -193,7 +193,10 @@ export class IndexSynchronizer extends IndexBuilder {
     }
 
     async updateListingWithApartmentHandlingUsingNewVersionData(newVersionData) {
-        const listing = await this.listingsSubCollection.findOne({ id: newVersionData.id }, {});
+        const listing = await this.listingsSubCollection.findOne(
+            { id: newVersionData.id, 'versions.sold': { $ne: true } },
+            {}
+        );
         const apartment = await this.apartmentsCollection.findOne({ _id: listing.apartment }, {});
 
         if (!this.listingVersionSignificantlyChanged(listing, newVersionData)) {
@@ -212,7 +215,10 @@ export class IndexSynchronizer extends IndexBuilder {
         // Last version is referring to the same apartment as it was referring before the listing's update
         const updatedListing = this.getUpdatedListingWithNewVersionData(listing, newVersionData);
 
-        await this.listingsSubCollection.updateOne({ id: updatedListing.id }, { $set: updatedListing });
+        await this.listingsSubCollection.updateOne(
+            { id: updatedListing.id, 'versions.sold': { $ne: true } },
+            { $set: updatedListing }
+        );
 
         const updatedApartmentImages = this.similarityDetector.getUnionBetweenHashesLists(
             apartment.images,

@@ -318,7 +318,7 @@ export class IndexBuilder {
 
         listing.apartment = await this.insertNewApartment(apartmentData);
 
-        await this.listingsSubCollection.updateOne({ id: listing.id }, { $set: listing });
+        await this.listingsSubCollection.updateOne({ _id: listing._id }, { $set: listing });
     }
 
     createApartmentDataFromListingData(listingData) {
@@ -411,6 +411,6 @@ export class IndexBuilder {
 
         listing.apartment = apartment._id;
 
-        await this.listingsSubCollection.updateOne({ id: listing.id }, { $set: listing });
+        await this.listingsSubCollection.updateOne({ _id: listing._id }, { $set: listing });
     }
 }
