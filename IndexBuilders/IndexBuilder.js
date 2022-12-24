@@ -29,18 +29,6 @@ export class IndexBuilder {
     }
 
     async fetchLiveListingsFromXml(xmlUrl) {
-        // return [
-        //     {
-        //         url: 'https://www.imobiliare.ro/vanzare-apartamente/bucuresti/aviatiei/apartament-de-vanzare-3-camere-X17L1025O',
-        //         id: 'X17L1025O',
-        //         lastModified: new Date(),
-        //     },
-        //     {
-        //         url: 'https://www.imobiliare.ro/vanzare-apartamente/bucuresti/aviatiei/apartament-de-vanzare-3-camere-X17L10118',
-        //         id: 'X17L10118',
-        //         lastModified: new Date(),
-        //     }
-        // ];
         let response;
 
         consoleLog(`[${this.source}] Fetching XML from: ${xmlUrl}`);
@@ -73,8 +61,8 @@ export class IndexBuilder {
         return xmlListings;
     }
 
-    async fetchVersionDataFromLiveListing(liveListingData) {
-        const versionData = await this.fetchVersionDataAndImageUrls(liveListingData);
+    async fetchVersionDataFromLiveListing(liveListing) {
+        const versionData = await this.fetchVersionDataAndImageUrls(liveListing);
 
         versionData.images = await callUntilSuccess(
             this.fetchBinHashesFromUrls.bind(this),
@@ -89,16 +77,16 @@ export class IndexBuilder {
         return versionData;
     }
 
-    async fetchVersionDataAndImageUrls(liveListingData) {
+    async fetchVersionDataAndImageUrls(liveListing) {
         let [browser, browserPage] = await this.smartRequester.getNewBrowserAndNewPage();
 
         try {
             consoleLog(`[${this.source}] Fetching listing page...`);
-            const listingPageHtml = await this.fetchListingPage(liveListingData, browserPage);
+            const listingPageHtml = await this.fetchListingPage(liveListing, browserPage);
 
             this.dataExtractor.setDataSource(listingPageHtml);
 
-            const versionDetails = this.getVersionDetailsWithExtractor(liveListingData);
+            const versionDetails = this.getVersionDetailsWithExtractor(liveListing);
 
             consoleLog(`[${this.source}] Fetching listing image urls...`);
 
@@ -126,13 +114,33 @@ export class IndexBuilder {
         let htmlResponse;
 
         try {
-            // TODO: Maybe check: browserPage !== null ? htmlResponse = getPageFromUrl() : apiResponse = get();
             htmlResponse = await this.smartRequester.getPageFromUrl(browserPage, liveListing.url);
             return htmlResponse;
         } catch (error) {
             consoleLog(`[${this.source}] Cannot fetch listing HTML from: ${liveListing.url}.`);
             throw error;
         }
+    }
+
+    async fetchListingsDataFromOlxApi(minPrice, maxPrice, offset) {
+        let url = `https://www.olx.ro/api/v1/offers/?offset=${offset}&limit=50&category_id=907&region_id=46&currency=EUR&sort_by=filter_float_price:asc&filter_float_price:from=${minPrice}`;
+
+        if (maxPrice !== null) {
+            url = url + `&filter_float_price:to=${maxPrice}`;
+        }
+
+        const response = await this.smartRequester.get(url);
+        const fetchedListings = response.data.data;
+        const promotedIndexes = response.data.metadata.promoted;
+
+        return fetchedListings
+            .filter((listing, idx) => !promotedIndexes.includes(idx))
+            .map((listing) => ({
+                ...listing,
+                id: String(listing.id),
+                url: listing.url,
+                lastModified: new Date(listing.last_refresh_time),
+            }));
     }
 
     getVersionDetailsWithExtractor(liveListing) {
@@ -142,14 +150,13 @@ export class IndexBuilder {
 
         const basePrice = this.dataExtractor.extractBasePrice();
         const hasSeparateTVA = this.dataExtractor.extractHasSeparateTVA();
-        const hasMentionedTVA = this.dataExtractor.extractHasMentionedTVA();
         const roomsCount = this.dataExtractor.extractRoomsCount();
         const surface = this.dataExtractor.extractSurface();
         const zone = this.dataExtractor.extractZone();
         const constructionYear = this.dataExtractor.extractConstructionYear();
         const floor = this.dataExtractor.extractFloor();
         const hasCentralHeating = this.dataExtractor.extractHasCentralHeating();
-        const hasNewApartment = this.dataExtractor.extractHasNewApartment(hasMentionedTVA, constructionYear);
+        const hasNewApartment = this.dataExtractor.extractHasNewApartment();
         const price = this.dataExtractor.extractPrice(basePrice, surface, hasSeparateTVA);
 
         return {
@@ -210,6 +217,7 @@ export class IndexBuilder {
         const lastVersion = oldVersions.pop();
 
         lastVersion.closeDate = getSyncDate();
+        lastVersion.sold = false;
 
         return {
             id: listing.id,

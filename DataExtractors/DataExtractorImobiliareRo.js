@@ -113,14 +113,32 @@ export class DataExtractorImobiliareRo extends DataExtractor {
         const $ = load(this.html);
 
         const containsPlusTVAString = function () {
-            const position = $(this).text().toLowerCase().indexOf('+ tva');
-            return position !== -1;
+            const matches = $(this)
+                .text()
+                .toLowerCase()
+                .match(/(\+tva|\+ tva|plus tva)/);
+            return matches !== null;
         };
 
-        const tvaFromPrice = $('.pret > .tva').filter(containsPlusTVAString);
-        const tvaFromTitle = $('h1[data-monitive-marker-detalii]').filter(containsPlusTVAString);
+        const containsIncludedTVAString = function () {
+            const matches = $(this)
+                .text()
+                .toLowerCase()
+                .match(/(tva inclus|inclus tva)/);
+            return matches !== null;
+        };
 
-        return tvaFromPrice.length > 0 || tvaFromTitle.length > 0;
+        const titleSelector = $('h1[data-monitive-marker-detalii]');
+
+        const tvaFromPrice = $('.pret > .tva').filter(containsPlusTVAString);
+        const tvaFromTitle = titleSelector.filter(containsPlusTVAString);
+
+        const includedTvaFromTitle = titleSelector.filter(containsIncludedTVAString);
+        const includedTvaFromDescription = $('#b_detalii_text .collapsible_content').filter(containsIncludedTVAString);
+
+        return includedTvaFromTitle.length > 0 || includedTvaFromDescription.length > 0
+            ? false
+            : tvaFromPrice.length > 0 || tvaFromTitle.length > 0;
     }
 
     extractHasMentionedTVA() {
@@ -136,6 +154,22 @@ export class DataExtractorImobiliareRo extends DataExtractor {
         const tvaFromDescription = $('#b_detalii_text .collapsible_content').filter(containsTVAString);
 
         return tvaFromPrice.length > 0 || tvaFromTitle.length > 0 || tvaFromDescription.length > 0;
+    }
+
+    extractHasNewApartmentWordsInTitleAndDescription() {
+        const $ = load(this.html);
+
+        const containsNewApartmentStrings = function () {
+            const position1 = $(this).text().toLowerCase().indexOf('nou');
+            const position2 = $(this).text().toLowerCase().indexOf('dezvoltator');
+
+            return position1 !== -1 || position2 !== -1;
+        };
+
+        const wordsFromTitle = $('h1[data-monitive-marker-detalii]').filter(containsNewApartmentStrings);
+        const wordsFromDescription = $('#b_detalii_text .collapsible_content').filter(containsNewApartmentStrings);
+
+        return wordsFromTitle.length > 0 || wordsFromDescription.length > 0;
     }
 
     extractRoomsCount() {

@@ -77,12 +77,21 @@ export const USER_AGENTS = [
 ];
 
 export const REFERER_IMOBILIARE_RO = 'https://www.imobiliare.ro/';
+export const REFERER_OLX_RO = 'https://www.olx.ro/';
+
 export const REFERRERS_IMOBILIARE_RO = [
     'https://www.google.com/',
     'https://www.google.com/',
     'https://www.facebook.com/',
     'https://www.imoradar24.ro/',
     'https://www.argus.me/',
+];
+export const REFERRERS_OLX_RO = [
+    'https://www.google.com/',
+    'https://www.google.com/',
+    'https://www.facebook.com/',
+    'https://www.argus.me/',
+    'https://www.storia.ro/',
 ];
 
 export const LISTING_PRICE_MIN_THRESHOLD = 10000; // Minimum amount of Euros a listing must have to be saved in database
@@ -93,3 +102,7 @@ export const TVA_5_MAX_SURFACE = 120; // Maximum surface an apartment can have t
 export const TVA_5_MAX_PRICE = 120000; //  Maximum price (euros) an apartment can have to get only 5% TVA
 export const TVA_5 = 0.05;
 export const TVA_19 = 0.19;
+
+export const OLX_HIGHEST_MIN_PRICE_FILTER = 400000;
+export const OLX_PRICE_FILTER_STEP = 1000;
+export const OLX_LISTINGS_PAGE_SIZE = 50;

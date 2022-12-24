@@ -2,6 +2,7 @@ import axios from 'axios';
 import {
     IMAGES_FETCH_MODE_PARALLEL,
     IMAGES_FETCH_MODE_SEQUENTIAL,
+    REFERER_OLX_RO,
     RETRY_CREATE_BROWSER_DELAY,
     USER_AGENTS,
     WORKING_PROXIES,
@@ -10,6 +11,8 @@ import Jimp from 'jimp';
 import puppeteer from 'puppeteer';
 import { callUntilSuccess, consoleLog, getRandomItem, useHeadlessBrowser, useProxies } from './Utils.js';
 import createHttpsProxyAgent from 'https-proxy-agent';
+import fs from 'fs';
+import * as webp from 'webp-converter';
 
 export class SmartRequester {
     constructor(referrers, imagesReferer, headersConfig) {
@@ -49,7 +52,7 @@ export class SmartRequester {
         };
     }
 
-    async get(url) {
+    async get(url, responseType = null) {
         const config = {
             headers: {
                 ...this.getDefaultHeaders(),
@@ -65,6 +68,10 @@ export class SmartRequester {
                 port: proxy.port,
                 auth: `${proxy.user}:${proxy.pass}`,
             });
+        }
+
+        if (responseType) {
+            config.responseType = responseType;
         }
 
         return await axios.get(url, config);
@@ -210,6 +217,46 @@ export class SmartRequester {
             });
         }
 
-        return Jimp.read(config);
+        if (this.imagesReferer !== REFERER_OLX_RO) {
+            return Jimp.read(config);
+        }
+
+        return this.getWebpImagePromise(config);
+    }
+
+    async getWebpImagePromise(config) {
+        return new Promise(async (resolve, reject) => {
+            const formattedUrl = config.url.replace(/[/\\:;*?"'<>|.,=]/g, '');
+            const filePathNoExt = `./tmp/${formattedUrl}`;
+
+            if (!fs.existsSync('./tmp/')) {
+                fs.mkdirSync('./tmp/');
+            }
+
+            const fileWriter = fs.createWriteStream(`${filePathNoExt}.webp`);
+            let response;
+
+            try {
+                response = await this.get(config.url, 'stream');
+            } catch (error) {
+                reject(error);
+                return;
+            }
+
+            response.data.pipe(fileWriter);
+
+            fileWriter.on('error', reject);
+            fileWriter.on('finish', async () => {
+                try {
+                    await webp.dwebp(`${filePathNoExt}.webp`, `${filePathNoExt}.jpg`, '-o');
+                    const image = await Jimp.read(`${filePathNoExt}.jpg`);
+                    fs.unlink(`${filePathNoExt}.webp`, () => {});
+                    fs.unlink(`${filePathNoExt}.jpg`, () => {});
+                    resolve(image);
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        });
     }
 }

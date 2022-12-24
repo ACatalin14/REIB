@@ -12,9 +12,9 @@ export class IndexInitializer extends IndexBuilder {
         return new Set(mapObjectsToValueOfKey(initializedListingsRecords, 'id'));
     }
 
-    getLiveListingsToInitFromXml(xmlListings, initializedListingsIdsSet) {
-        return xmlListings
-            .filter((xmlListing) => !initializedListingsIdsSet.has(xmlListing.id))
+    getLiveListingsToInit(listings, initializedListingsIdsSet) {
+        return listings
+            .filter((listing) => !initializedListingsIdsSet.has(listing.id))
             .map((listing) => ({
                 id: listing.id,
                 url: listing.url,
@@ -44,6 +44,7 @@ export class IndexInitializer extends IndexBuilder {
             } catch (error) {
                 consoleLog(`[${this.source}] Cannot fetch listing data.`);
                 consoleLog(error);
+                await this.liveListingsSubCollection.deleteOne({ id: liveListings[i].id });
                 continue;
             }
 

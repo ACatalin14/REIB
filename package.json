@@ -41,7 +41,8 @@
         "promisepipe": "3.0.0",
         "puppeteer": "19.3.0",
         "request": "2.88.2",
-        "request-promise": "4.2.6"
+        "request-promise": "4.2.6",
+        "webp-converter": "2.3.3"
     },
     "devDependencies": {
         "prettier": "2.7.1"

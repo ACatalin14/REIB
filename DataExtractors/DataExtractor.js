@@ -25,6 +25,10 @@ export class DataExtractor {
         // To be implemented
     }
 
+    extractHasNewApartmentWordsInTitleAndDescription() {
+        // To be implemented
+    }
+
     extractRoomsCount() {
         // To be implemented
     }
@@ -53,12 +57,15 @@ export class DataExtractor {
         // To be implemented
     }
 
-    extractHasNewApartment(hasMentionedTVA, constructionYear) {
+    extractHasNewApartment() {
+        const hasMentionedTVA = this.extractHasMentionedTVA();
+
         if (hasMentionedTVA) {
             // Any listing mentioning TVA usually presents a new apartment
             return true;
         }
 
+        const constructionYear = this.extractConstructionYear();
         const years = constructionYear ? constructionYear.match(/[0-9]{4}/g) : null;
 
         if (!years) {
@@ -68,8 +75,13 @@ export class DataExtractor {
 
         const year = Number(years[0]);
 
-        // Any listing without mentioned TVA and a construction year after 2020 usually presents a new apartment
-        return year > LISTING_OLD_APARTMENT_MAX_YEAR;
+        if (year > LISTING_OLD_APARTMENT_MAX_YEAR) {
+            // Any listing without mentioned TVA and a construction year after 2020 usually presents a new apartment
+            return true;
+        }
+
+        // If no TVA or construction year have been identified, look for specific words in title & description
+        return this.extractHasNewApartmentWordsInTitleAndDescription();
     }
 
     extractPrice(basePrice, surface, hasSeparateTVA) {

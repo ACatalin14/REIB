@@ -41,14 +41,14 @@ export class IndexSynchronizer extends IndexBuilder {
         // To be implemented
     }
 
-    async fetchMissingLiveListingsFromXml(xmlListings) {
+    async fetchMissingLiveListingsFromMarket(marketLiveListings) {
         try {
             const dbListingsWithIds = await this.liveListingsSubCollection.find({}, { projection: { _id: 0, id: 1 } });
 
             const dbListingsIdsSet = new Set(mapObjectsToValueOfKey(dbListingsWithIds, 'id'));
-            const xmlListingsIdsSet = new Set(mapObjectsToValueOfKey(xmlListings, 'id'));
+            const marketListingsIdsSet = new Set(mapObjectsToValueOfKey(marketLiveListings, 'id'));
 
-            return [...dbListingsIdsSet].filter((dbListing) => !xmlListingsIdsSet.has(dbListing));
+            return [...dbListingsIdsSet].filter((dbListing) => !marketListingsIdsSet.has(dbListing));
         } catch (error) {
             consoleLog(`[${this.source}] Cannot fetch deleted listings from database.`);
             throw error;
@@ -75,17 +75,17 @@ export class IndexSynchronizer extends IndexBuilder {
 
         await this.liveListingsSubCollection.deleteMany({ id: { $in: deletedListingsIds } });
 
-        this.listingsClosedCount = deletedListingsIds.length;
+        this.listingsClosedCount += deletedListingsIds.length;
 
         consoleLog(`[${this.source}] Synchronized sold listings.`);
     }
 
-    async syncCurrentMarketListingsFromXml(liveListings) {
+    async syncCurrentMarketListingsFromMarket(liveListings, marketLiveListings = []) {
         const liveListingsToCreate = [];
 
         consoleLog(`[${this.source}] Synchronizing current market listings...`);
 
-        await this.handleLiveListingsToSynchronize(liveListings, liveListingsToCreate);
+        await this.handleLiveListingsToSynchronize(liveListings, liveListingsToCreate, marketLiveListings);
 
         if (liveListingsToCreate.length > 0) {
             await this.liveListingsSubCollection.insertMany(liveListingsToCreate);
@@ -94,7 +94,7 @@ export class IndexSynchronizer extends IndexBuilder {
         consoleLog(`[${this.source}] Synchronized current market listings.`);
     }
 
-    async handleLiveListingsToSynchronize(liveListings, liveListingsToCreate) {
+    async handleLiveListingsToSynchronize(liveListings, liveListingsToCreate, marketLiveListings = []) {
         const dbListingsRecords = await this.liveListingsSubCollection.find({}, { _id: 0, id: 1, lastModified: 1 });
         const dbListingsMap = indexObjectsByKey(dbListingsRecords, 'id');
         const dbListingsIds = new Set(Object.keys(dbListingsMap));
@@ -104,10 +104,16 @@ export class IndexSynchronizer extends IndexBuilder {
                 const liveListing = liveListings[i];
                 const listingId = liveListing.id;
                 const wasLiveBefore = dbListingsIds.has(listingId);
+                const liveListingDbProps = {
+                    id: liveListing.id,
+                    url: liveListing.url,
+                    lastModified: liveListing.lastModified,
+                };
 
                 if (!wasLiveBefore) {
                     await this.createMarketListing(liveListing);
-                    liveListingsToCreate.push(liveListing);
+                    liveListingsToCreate.push(liveListingDbProps);
+                    marketLiveListings.push(liveListingDbProps);
                     consoleLog(`[${this.source}] Fetched and created listing in database. Waiting...`);
                     await delay(getRandomRestingDelay());
                     continue;
@@ -116,12 +122,16 @@ export class IndexSynchronizer extends IndexBuilder {
                 const dbListing = dbListingsMap[listingId];
                 if (dbListing.lastModified < liveListing.lastModified) {
                     await this.updateMarketListing(liveListing);
-                    await this.liveListingsSubCollection.updateOne({ id: listingId }, { $set: liveListing });
+                    marketLiveListings.push(liveListingDbProps);
+                    await this.liveListingsSubCollection.updateOne({ id: listingId }, { $set: liveListingDbProps });
                     consoleLog(`[${this.source}] Fetched and updated listing in database. Waiting...`);
                     await delay(getRandomRestingDelay());
+                    continue;
                 }
+
+                marketLiveListings.push(liveListingDbProps);
             } catch (error) {
-                consoleLog(`[${this.source}] Cannot process XML listing.`);
+                consoleLog(`[${this.source}] Cannot process live listing.`);
                 consoleLog(error);
             }
         }
@@ -150,6 +160,26 @@ export class IndexSynchronizer extends IndexBuilder {
             newVersionData = await this.fetchVersionDataFromLiveListing(liveListing);
         } catch (error) {
             consoleLog(`[${this.source}] Cannot fetch updated listing data from: ${liveListing.url}`);
+
+            if (error.message === 'Cannot find all listing details.') {
+                consoleLog(`[${this.source}] Marking existing listing as sold...`);
+
+                await this.listingsSubCollection.updateOne(
+                    { id: liveListing.id },
+                    {
+                        $set: {
+                            'versions.$[listingVersion].closeDate': getSyncDate(),
+                            'versions.$[listingVersion].sold': true,
+                        },
+                    },
+                    {
+                        arrayFilters: [{ 'listingVersion.closeDate': null }],
+                    }
+                );
+
+                this.listingsClosedCount++;
+            }
+
             throw error;
         }
 

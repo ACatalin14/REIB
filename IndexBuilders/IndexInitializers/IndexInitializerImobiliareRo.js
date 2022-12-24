@@ -14,7 +14,7 @@ export class IndexInitializerImobiliareRo extends IndexInitializer {
 
             const xmlListings = await this.fetchLiveListingsFromXml(URL_XML_IMOBILIARE_LISTINGS_BUCHAREST);
             const initializedListingsIdsSet = await this.fetchInitializedListingsIdsSet();
-            const liveListingsToInit = this.getLiveListingsToInitFromXml(xmlListings, initializedListingsIdsSet);
+            const liveListingsToInit = this.getLiveListingsToInit(xmlListings, initializedListingsIdsSet);
             await this.prepareDbForLiveListingsInit(liveListingsToInit, initializedListingsIdsSet);
             await this.handleLiveListingsToInitialize(liveListingsToInit);
 
