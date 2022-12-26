@@ -12,6 +12,9 @@ import {
     SOURCE_OLX_RO,
     REFERRERS_OLX_RO,
     REFERER_OLX_RO,
+    SOURCE_ANUNTUL_RO,
+    REFERRERS_ANUNTUL_RO,
+    REFERER_ANUNTUL_RO,
 } from '../../Constants.js';
 import { ImageHasher } from '../../Helpers/ImageHasher.js';
 import { DbCollection } from '../../DbLayer/DbCollection.js';
@@ -21,6 +24,8 @@ import { SimilarityDetector } from '../../Helpers/SimilarityDetector.js';
 import { DbSubCollection } from '../../DbLayer/DbSubCollection.js';
 import { DataExtractorOlxRo } from '../../DataExtractors/DataExtractorOlxRo.js';
 import { IndexSynchronizerOlxRo } from './IndexSynchronizerOlxRo.js';
+import { DataExtractorAnuntulRo } from '../../DataExtractors/DataExtractorAnuntulRo.js';
+import { IndexSynchronizerAnuntulRo } from './IndexSynchronizerAnuntulRo.js';
 
 export class MainIndexSynchronizer {
     constructor() {
@@ -38,8 +43,8 @@ export class MainIndexSynchronizer {
 
         await this.syncIndexImobiliareRo();
         await this.syncIndexOlxRo();
+        await this.syncIndexAnuntulRo();
         // await this.syncIndexStoriaRo();
-        // await this.syncIndexAnuntulRo();
 
         consoleLog('[main-synchronizer] Disconnecting from the database...');
         await this.dbClient.disconnect();
@@ -109,5 +114,33 @@ export class MainIndexSynchronizer {
 
     async syncIndexStoriaRo() {}
 
-    async syncIndexAnuntulRo() {}
+    async syncIndexAnuntulRo() {
+        const listingsSubCollection = new DbSubCollection(DB_COLLECTION_LISTINGS, this.dbClient, {
+            source: SOURCE_ANUNTUL_RO,
+        });
+        const liveListingsSubCollection = new DbSubCollection(DB_COLLECTION_LIVE_LISTINGS, this.dbClient, {
+            source: SOURCE_ANUNTUL_RO,
+        });
+        const dataExtractor = new DataExtractorAnuntulRo();
+        const imageHasher = new ImageHasher();
+        const similarityDetector = new SimilarityDetector(imageHasher);
+        const smartRequester = new SmartRequester(REFERRERS_ANUNTUL_RO, REFERER_ANUNTUL_RO, {
+            authority: 'www.anuntul.ro',
+        });
+        const dbSyncStats = new DbCollection(DB_COLLECTION_SYNC_STATS, this.dbClient);
+
+        const synchronizer = new IndexSynchronizerAnuntulRo(
+            SOURCE_ANUNTUL_RO,
+            this.apartmentsCollection,
+            listingsSubCollection,
+            liveListingsSubCollection,
+            dataExtractor,
+            smartRequester,
+            imageHasher,
+            similarityDetector,
+            dbSyncStats
+        );
+
+        await synchronizer.sync();
+    }
 }

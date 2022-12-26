@@ -11,6 +11,9 @@ import {
     SOURCE_OLX_RO,
     REFERRERS_OLX_RO,
     REFERER_OLX_RO,
+    SOURCE_ANUNTUL_RO,
+    REFERER_ANUNTUL_RO,
+    REFERRERS_ANUNTUL_RO,
 } from '../../Constants.js';
 import { ImageHasher } from '../../Helpers/ImageHasher.js';
 import { DbCollection } from '../../DbLayer/DbCollection.js';
@@ -20,6 +23,8 @@ import { DbSubCollection } from '../../DbLayer/DbSubCollection.js';
 import { SimilarityDetector } from '../../Helpers/SimilarityDetector.js';
 import { DataExtractorOlxRo } from '../../DataExtractors/DataExtractorOlxRo.js';
 import { IndexInitializerOlxRo } from './IndexInitializerOlxRo.js';
+import { DataExtractorAnuntulRo } from '../../DataExtractors/DataExtractorAnuntulRo.js';
+import { IndexInitializerAnuntulRo } from './IndexInitializerAnuntulRo.js';
 
 export class MainIndexInitializer {
     constructor() {
@@ -37,8 +42,8 @@ export class MainIndexInitializer {
 
         await this.initializeIndexImobiliareRo();
         await this.initializeIndexOlxRo();
+        await this.initializeIndexAnuntulRo();
         // await this.initializeStoriaRoIndex();
-        // await this.initializeAnuntulRoIndex();
 
         consoleLog('[main-initializer] Disconnecting from the database...');
         await this.dbClient.disconnect();
@@ -104,5 +109,31 @@ export class MainIndexInitializer {
 
     async initializeIndexStoriaRo() {}
 
-    async initializeIndexAnuntulRo() {}
+    async initializeIndexAnuntulRo() {
+        const listingsSubCollection = new DbSubCollection(DB_COLLECTION_LISTINGS, this.dbClient, {
+            source: SOURCE_ANUNTUL_RO,
+        });
+        const liveListingsSubCollection = new DbSubCollection(DB_COLLECTION_LIVE_LISTINGS, this.dbClient, {
+            source: SOURCE_ANUNTUL_RO,
+        });
+        const dataExtractor = new DataExtractorAnuntulRo();
+        const imageHasher = new ImageHasher();
+        const similarityDetector = new SimilarityDetector(imageHasher);
+        const smartRequester = new SmartRequester(REFERRERS_ANUNTUL_RO, REFERER_ANUNTUL_RO, {
+            authority: 'www.anuntul.ro',
+        });
+
+        const initializer = new IndexInitializerAnuntulRo(
+            SOURCE_ANUNTUL_RO,
+            this.apartmentsCollection,
+            listingsSubCollection,
+            liveListingsSubCollection,
+            dataExtractor,
+            smartRequester,
+            imageHasher,
+            similarityDetector
+        );
+
+        await initializer.start();
+    }
 }

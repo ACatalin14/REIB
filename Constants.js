@@ -19,7 +19,9 @@ export const DEFAULT_HASH_SIZE = 16; // Use powers of 2
 
 export const SOURCE_IMOBILIARE_RO = 'imobiliare.ro';
 export const SOURCE_OLX_RO = 'olx.ro';
+export const SOURCE_ANUNTUL_RO = 'anuntul.ro';
 
+// Index types for stats making
 export const INDEX_TYPE_LISTINGS = 'listings';
 export const INDEX_TYPE_APARTMENTS = 'apartments';
 export const INDEX_TYPE_SOLD_APARTMENTS = 'soldApartments';
@@ -44,6 +46,9 @@ export const URL_SSL_PROXIES = 'https://sslproxies.org/';
 export const URL_XML_IMOBILIARE_LISTINGS_BUCHAREST =
     'https://www.imobiliare.ro/sitemap-listings-apartments-for-sale-bucuresti-ilfov-ro.xml';
 export const URL_XML_ANUNTUL_LISTINGS_BUCHAREST_1 = 'https://www.anuntul.ro/sitemap-category_3.xml';
+export const URL_XML_ANUNTUL_LISTINGS_BUCHAREST_2 = 'https://www.anuntul.ro/sitemap-category_4.xml';
+export const URL_XML_ANUNTUL_LISTINGS_BUCHAREST_3 = 'https://www.anuntul.ro/sitemap-category_5.xml';
+export const URL_XML_ANUNTUL_LISTINGS_BUCHAREST_4 = 'https://www.anuntul.ro/sitemap-category_6.xml';
 
 export const HTTP_STATUS_CODE_OK = 200;
 
@@ -78,6 +83,7 @@ export const USER_AGENTS = [
 
 export const REFERER_IMOBILIARE_RO = 'https://www.imobiliare.ro/';
 export const REFERER_OLX_RO = 'https://www.olx.ro/';
+export const REFERER_ANUNTUL_RO = 'https://www.anuntul.ro/';
 
 export const REFERRERS_IMOBILIARE_RO = [
     'https://www.google.com/',
@@ -92,6 +98,13 @@ export const REFERRERS_OLX_RO = [
     'https://www.facebook.com/',
     'https://www.argus.me/',
     'https://www.storia.ro/',
+];
+export const REFERRERS_ANUNTUL_RO = [
+    'https://www.google.com/',
+    'https://www.google.com/',
+    'https://www.facebook.com/',
+    'https://www.imoradar24.ro/',
+    'https://www.oferte360.ro/',
 ];
 
 export const LISTING_PRICE_MIN_THRESHOLD = 10000; // Minimum amount of Euros a listing must have to be saved in database
