@@ -80,7 +80,7 @@ export class DataExtractor {
             return true;
         }
 
-        // If no TVA or construction year have been identified, look for specific words in title & description
+        // If no TVA and construction year set, look for specific words in title & description
         return this.extractHasNewApartmentWordsInTitleAndDescription();
     }
 
@@ -90,9 +90,9 @@ export class DataExtractor {
         }
 
         if (surface <= TVA_5_MAX_SURFACE && basePrice <= TVA_5_MAX_PRICE) {
-            return basePrice * (1 + TVA_5);
+            return Math.round(basePrice * (1 + TVA_5) * 100) / 100;
         }
 
-        return basePrice * (1 + TVA_19);
+        return Math.round(basePrice * (1 + TVA_19) * 100) / 100;
     }
 }
