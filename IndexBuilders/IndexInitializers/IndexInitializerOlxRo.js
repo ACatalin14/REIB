@@ -8,11 +8,6 @@ import {
 } from '../../Constants.js';
 
 export class IndexInitializerOlxRo extends IndexInitializer {
-    getListingIdFromUrl(url) {
-        const lastDashIndex = url.lastIndexOf('-');
-        return url.slice(lastDashIndex + 1);
-    }
-
     async start() {
         try {
             consoleLog(`[${this.source}] Initialization started.`);

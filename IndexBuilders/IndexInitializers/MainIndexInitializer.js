@@ -14,6 +14,9 @@ import {
     SOURCE_ANUNTUL_RO,
     REFERER_ANUNTUL_RO,
     REFERRERS_ANUNTUL_RO,
+    SOURCE_PUBLI24_RO,
+    REFERER_PUBLI24_RO,
+    REFERRERS_PUBLI24_RO,
 } from '../../Constants.js';
 import { ImageHasher } from '../../Helpers/ImageHasher.js';
 import { DbCollection } from '../../DbLayer/DbCollection.js';
@@ -25,6 +28,8 @@ import { DataExtractorOlxRo } from '../../DataExtractors/DataExtractorOlxRo.js';
 import { IndexInitializerOlxRo } from './IndexInitializerOlxRo.js';
 import { DataExtractorAnuntulRo } from '../../DataExtractors/DataExtractorAnuntulRo.js';
 import { IndexInitializerAnuntulRo } from './IndexInitializerAnuntulRo.js';
+import { DataExtractorPubli24Ro } from '../../DataExtractors/DataExtractorPubli24Ro.js';
+import { IndexInitializerPubli24Ro } from './IndexInitializerPubli24Ro.js';
 
 export class MainIndexInitializer {
     constructor() {
@@ -42,8 +47,8 @@ export class MainIndexInitializer {
 
         await this.initializeIndexImobiliareRo();
         await this.initializeIndexOlxRo();
+        await this.initializeIndexPubli24Ro();
         await this.initializeIndexAnuntulRo();
-        // await this.initializeStoriaRoIndex();
 
         consoleLog('[main-initializer] Disconnecting from the database...');
         await this.dbClient.disconnect();
@@ -107,7 +112,33 @@ export class MainIndexInitializer {
         await initializer.start();
     }
 
-    async initializeIndexStoriaRo() {}
+    async initializeIndexPubli24Ro() {
+        const listingsSubCollection = new DbSubCollection(DB_COLLECTION_LISTINGS, this.dbClient, {
+            source: SOURCE_PUBLI24_RO,
+        });
+        const liveListingsSubCollection = new DbSubCollection(DB_COLLECTION_LIVE_LISTINGS, this.dbClient, {
+            source: SOURCE_PUBLI24_RO,
+        });
+        const dataExtractor = new DataExtractorPubli24Ro();
+        const imageHasher = new ImageHasher();
+        const similarityDetector = new SimilarityDetector(imageHasher);
+        const smartRequester = new SmartRequester(REFERRERS_PUBLI24_RO, REFERER_PUBLI24_RO, {
+            authority: 'www.publi24.ro',
+        });
+
+        const initializer = new IndexInitializerPubli24Ro(
+            SOURCE_PUBLI24_RO,
+            this.apartmentsCollection,
+            listingsSubCollection,
+            liveListingsSubCollection,
+            dataExtractor,
+            smartRequester,
+            imageHasher,
+            similarityDetector
+        );
+
+        await initializer.start();
+    }
 
     async initializeIndexAnuntulRo() {
         const listingsSubCollection = new DbSubCollection(DB_COLLECTION_LISTINGS, this.dbClient, {

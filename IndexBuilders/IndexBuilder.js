@@ -1,6 +1,12 @@
 import { callUntilSuccess, consoleLog, getSyncDate } from '../Helpers/Utils.js';
 import { load } from 'cheerio';
-import { RETRY_IMAGES_FETCH_DELAY, RETRY_XML_FETCH_DELAY } from '../Constants.js';
+import {
+    MONTHS_TRANSLATIONS,
+    ONE_DAY,
+    RETRY_IMAGES_FETCH_DELAY,
+    RETRY_XML_FETCH_DELAY,
+    URL_PUBLI24_LISTINGS_BUCHAREST,
+} from '../Constants.js';
 
 export class IndexBuilder {
     constructor(
@@ -61,14 +67,14 @@ export class IndexBuilder {
         return xmlListings;
     }
 
-    async fetchVersionDataFromLiveListing(liveListing) {
+    async fetchVersionDataFromLiveListing(liveListing, retryImagesFetchTime = RETRY_IMAGES_FETCH_DELAY) {
         const versionData = await this.fetchVersionDataAndImageUrls(liveListing);
 
         versionData.images = await callUntilSuccess(
             this.fetchBinHashesFromUrls.bind(this),
             [versionData.imageUrls],
             `[${this.source}] Cannot fetch all images due to possible bot detection.`,
-            RETRY_IMAGES_FETCH_DELAY,
+            retryImagesFetchTime,
             3
         );
 
@@ -143,6 +149,76 @@ export class IndexBuilder {
             }));
     }
 
+    async fetchLiveListingsFromPubli24MainSite(setLastModified = true) {
+        let response;
+
+        consoleLog(`[${this.source}] Fetching live listings from: ${URL_PUBLI24_LISTINGS_BUCHAREST}`);
+
+        response = await callUntilSuccess(
+            this.smartRequester.get.bind(this.smartRequester),
+            [URL_PUBLI24_LISTINGS_BUCHAREST, { timeout: 90000 }],
+            `[${this.source}] Error while fetching live listings from: ${URL_PUBLI24_LISTINGS_BUCHAREST}.`,
+            RETRY_XML_FETCH_DELAY
+        );
+
+        consoleLog(`[${this.source}] Fetched page with live listings.`);
+
+        const $ = load(response.data);
+        const liveListings = [];
+
+        $('li[location]').each((index, element) => {
+            if (index < 4) {
+                return;
+            }
+
+            const link = $('a', element);
+            const liveListing = {
+                id: $(element).attr('location'),
+                url: link.attr('href'),
+                lastModified: null,
+            };
+
+            if (setLastModified) {
+                const lastModifiedText = $('.listing-data > div:last-child > .article-date', element).text();
+                liveListing.lastModified = this.getLastModifiedForPubli24Listing(lastModifiedText);
+            }
+
+            liveListings.push(liveListing);
+        });
+
+        return liveListings;
+    }
+
+    getLastModifiedForPubli24Listing(text) {
+        text = text.toLowerCase();
+        const today = new Date();
+
+        if (text.indexOf('azi') !== -1) {
+            const year = today.getFullYear();
+            const month = today.getMonth() + 1;
+            const day = today.getDate();
+            const timeMatches = text.match(/([0-9]{2}:[0-9]{2})/);
+            return new Date(`${year}-${month}-${day} ${timeMatches[1]}`);
+        }
+
+        if (text.indexOf('ieri') !== -1) {
+            const yesterday = new Date(today - ONE_DAY);
+            const year = yesterday.getFullYear();
+            const month = yesterday.getMonth() + 1;
+            const day = yesterday.getDate();
+            const timeMatches = text.match(/([0-9]{2}:[0-9]{2})/);
+            return new Date(`${year}-${month}-${day} ${timeMatches[1]}`);
+        }
+
+        let [day, month] = text.split(' ');
+
+        // Suppose that the listing has been published in the current year
+        const year = today.getFullYear();
+        const mon = MONTHS_TRANSLATIONS[month];
+
+        return new Date(`${year}-${mon}-${day} 08:00`);
+    }
+
     getVersionDetailsWithExtractor(liveListing) {
         if (!this.dataExtractor.hasValidListingDetails()) {
             throw new Error('Cannot find all listing details.');
@@ -162,7 +238,9 @@ export class IndexBuilder {
         return {
             id: liveListing.id,
             url: liveListing.url,
-            lastModified: new Date(liveListing.lastModified),
+            lastModified: liveListing.lastModified
+                ? new Date(liveListing.lastModified)
+                : this.dataExtractor.extractLastModified(),
             hasNewApartment,
             roomsCount,
             zone,

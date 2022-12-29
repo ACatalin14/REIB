@@ -15,6 +15,9 @@ import {
     SOURCE_ANUNTUL_RO,
     REFERRERS_ANUNTUL_RO,
     REFERER_ANUNTUL_RO,
+    SOURCE_PUBLI24_RO,
+    REFERRERS_PUBLI24_RO,
+    REFERER_PUBLI24_RO,
 } from '../../Constants.js';
 import { ImageHasher } from '../../Helpers/ImageHasher.js';
 import { DbCollection } from '../../DbLayer/DbCollection.js';
@@ -26,6 +29,8 @@ import { DataExtractorOlxRo } from '../../DataExtractors/DataExtractorOlxRo.js';
 import { IndexSynchronizerOlxRo } from './IndexSynchronizerOlxRo.js';
 import { DataExtractorAnuntulRo } from '../../DataExtractors/DataExtractorAnuntulRo.js';
 import { IndexSynchronizerAnuntulRo } from './IndexSynchronizerAnuntulRo.js';
+import { DataExtractorPubli24Ro } from '../../DataExtractors/DataExtractorPubli24Ro.js';
+import { IndexSynchronizerPubli24Ro } from './IndexSynchronizerPubli24Ro.js';
 
 export class MainIndexSynchronizer {
     constructor() {
@@ -43,8 +48,8 @@ export class MainIndexSynchronizer {
 
         await this.syncIndexImobiliareRo();
         await this.syncIndexOlxRo();
+        await this.syncIndexPubli24Ro();
         await this.syncIndexAnuntulRo();
-        // await this.syncIndexStoriaRo();
 
         consoleLog('[main-synchronizer] Disconnecting from the database...');
         await this.dbClient.disconnect();
@@ -112,7 +117,35 @@ export class MainIndexSynchronizer {
         await synchronizer.sync();
     }
 
-    async syncIndexStoriaRo() {}
+    async syncIndexPubli24Ro() {
+        const listingsSubCollection = new DbSubCollection(DB_COLLECTION_LISTINGS, this.dbClient, {
+            source: SOURCE_PUBLI24_RO,
+        });
+        const liveListingsSubCollection = new DbSubCollection(DB_COLLECTION_LIVE_LISTINGS, this.dbClient, {
+            source: SOURCE_PUBLI24_RO,
+        });
+        const dataExtractor = new DataExtractorPubli24Ro();
+        const imageHasher = new ImageHasher();
+        const similarityDetector = new SimilarityDetector(imageHasher);
+        const smartRequester = new SmartRequester(REFERRERS_PUBLI24_RO, REFERER_PUBLI24_RO, {
+            authority: 'www.publi24.ro',
+        });
+        const dbSyncStats = new DbCollection(DB_COLLECTION_SYNC_STATS, this.dbClient);
+
+        const synchronizer = new IndexSynchronizerPubli24Ro(
+            SOURCE_PUBLI24_RO,
+            this.apartmentsCollection,
+            listingsSubCollection,
+            liveListingsSubCollection,
+            dataExtractor,
+            smartRequester,
+            imageHasher,
+            similarityDetector,
+            dbSyncStats
+        );
+
+        await synchronizer.sync();
+    }
 
     async syncIndexAnuntulRo() {
         const listingsSubCollection = new DbSubCollection(DB_COLLECTION_LISTINGS, this.dbClient, {

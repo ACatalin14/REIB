@@ -1,10 +1,12 @@
 export const RESTING_DELAY_MIN = 1000; // 1 seconds
 export const RESTING_DELAY_MAX = 3000; // 3 seconds
 export const RETRY_IMAGES_FETCH_DELAY = 65000; // 65 seconds
+export const RETRY_IMAGES_FETCH_PUBLI24_DELAY = 3000; // 3 seconds
 export const RETRY_IMAGES_URLS_GET_DELAY = 1000; // 1 seconds
 export const RETRY_DB_OPERATION_DELAY = 30000; // 30 seconds
 export const RETRY_XML_FETCH_DELAY = 5000; // 5 seconds
 export const RETRY_CREATE_BROWSER_DELAY = 1000; // 1 second
+export const ONE_DAY = 86400000;
 
 export const SYNCHRONIZATION_TIME = '22:00';
 
@@ -19,6 +21,7 @@ export const DEFAULT_HASH_SIZE = 16; // Use powers of 2
 
 export const SOURCE_IMOBILIARE_RO = 'imobiliare.ro';
 export const SOURCE_OLX_RO = 'olx.ro';
+export const SOURCE_PUBLI24_RO = 'publi24.ro';
 export const SOURCE_ANUNTUL_RO = 'anuntul.ro';
 
 // Index types for stats making
@@ -49,6 +52,8 @@ export const URL_XML_ANUNTUL_LISTINGS_BUCHAREST_1 = 'https://www.anuntul.ro/site
 export const URL_XML_ANUNTUL_LISTINGS_BUCHAREST_2 = 'https://www.anuntul.ro/sitemap-category_4.xml';
 export const URL_XML_ANUNTUL_LISTINGS_BUCHAREST_3 = 'https://www.anuntul.ro/sitemap-category_5.xml';
 export const URL_XML_ANUNTUL_LISTINGS_BUCHAREST_4 = 'https://www.anuntul.ro/sitemap-category_6.xml';
+export const URL_PUBLI24_LISTINGS_BUCHAREST =
+    'https://www.publi24.ro/anunturi/imobiliare/de-vanzare/apartamente/bucuresti/?pag=1&ordered=asc&orderby=price&pagesize=20000';
 
 export const HTTP_STATUS_CODE_OK = 200;
 
@@ -83,6 +88,7 @@ export const USER_AGENTS = [
 
 export const REFERER_IMOBILIARE_RO = 'https://www.imobiliare.ro/';
 export const REFERER_OLX_RO = 'https://www.olx.ro/';
+export const REFERER_PUBLI24_RO = 'https://www.publi24.ro/';
 export const REFERER_ANUNTUL_RO = 'https://www.anuntul.ro/';
 
 export const REFERRERS_IMOBILIARE_RO = [
@@ -98,6 +104,14 @@ export const REFERRERS_OLX_RO = [
     'https://www.facebook.com/',
     'https://www.argus.me/',
     'https://www.storia.ro/',
+];
+export const REFERRERS_PUBLI24_RO = [
+    'https://www.google.com/',
+    'https://www.google.com/',
+    'https://www.facebook.com/',
+    'https://www.romimo.ro/',
+    'https://www.storia.ro/',
+    'https://www.autouncle.ro/',
 ];
 export const REFERRERS_ANUNTUL_RO = [
     'https://www.google.com/',
@@ -119,3 +133,18 @@ export const TVA_19 = 0.19;
 export const OLX_HIGHEST_MIN_PRICE_FILTER = 400000;
 export const OLX_PRICE_FILTER_STEP = 1000;
 export const OLX_LISTINGS_PAGE_SIZE = 50;
+
+export const MONTHS_TRANSLATIONS = {
+    ianuarie: 'january',
+    februarie: 'february',
+    martie: 'march',
+    aprilie: 'april',
+    mai: 'may',
+    iunie: 'june',
+    iulie: 'july',
+    august: 'august',
+    septembrie: 'september',
+    octombrie: 'october',
+    noiembrie: 'november',
+    decembrie: 'december',
+};

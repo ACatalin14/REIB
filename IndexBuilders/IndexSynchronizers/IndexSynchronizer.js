@@ -122,7 +122,7 @@ export class IndexSynchronizer extends IndexBuilder {
                 }
 
                 const dbListing = dbListingsMap[listingId];
-                if (dbListing.lastModified < liveListing.lastModified) {
+                if (this.checkListingIsOutdated(dbListing.lastModified, liveListing.lastModified)) {
                     await this.updateMarketListing(liveListing);
                     marketLiveListings.push(liveListingDbProps);
                     await this.liveListingsSubCollection.updateOne({ id: listingId }, { $set: liveListingDbProps });
@@ -137,6 +137,10 @@ export class IndexSynchronizer extends IndexBuilder {
                 consoleLog(error);
             }
         }
+    }
+
+    checkListingIsOutdated(lastKnownVersionDate, liveVersionDate) {
+        return lastKnownVersionDate < liveVersionDate;
     }
 
     async createMarketListing(liveListing) {

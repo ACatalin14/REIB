@@ -52,8 +52,8 @@ export class SmartRequester {
         };
     }
 
-    async get(url, responseType = null) {
-        const config = {
+    async get(url, extraConfigs = {}) {
+        let config = {
             headers: {
                 ...this.getDefaultHeaders(),
                 ...this.headersConfig,
@@ -70,8 +70,8 @@ export class SmartRequester {
             });
         }
 
-        if (responseType) {
-            config.responseType = responseType;
+        if (extraConfigs) {
+            config = { ...config, ...extraConfigs };
         }
 
         return await axios.get(url, config);
@@ -237,7 +237,7 @@ export class SmartRequester {
             let response;
 
             try {
-                response = await this.get(config.url, 'stream');
+                response = await this.get(config.url, { responseType: 'stream' });
             } catch (error) {
                 reject(error);
                 return;

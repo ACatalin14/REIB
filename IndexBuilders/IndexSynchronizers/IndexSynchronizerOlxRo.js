@@ -9,11 +9,6 @@ import { consoleLog, getRandomRestingDelay } from '../../Helpers/Utils.js';
 import delay from 'delay';
 
 export class IndexSynchronizerOlxRo extends IndexSynchronizer {
-    getListingIdFromUrl(url) {
-        const lastDashIndex = url.lastIndexOf('-');
-        return url.slice(lastDashIndex + 1);
-    }
-
     async sync() {
         try {
             consoleLog(`[${this.source}] Synchronization started.`);
@@ -44,19 +39,19 @@ export class IndexSynchronizerOlxRo extends IndexSynchronizer {
 
     async syncCurrentMarketListingsFromRange(minPrice, maxPrice, marketLiveListings) {
         let offset = 0;
-
         const strMaxPrice = maxPrice ? maxPrice : 'Infinity';
         const range = `${minPrice} - ${strMaxPrice}`;
-        consoleLog(`[${this.source}] Synchronizing listings with price between ${range} euros.`);
+        const liveListingsToSync = [];
+        const newMarketLiveListings = [];
+
+        consoleLog(`[${this.source}] Fetching live listings with price between ${range} euros.`);
 
         while (true) {
             const listingsData = await this.fetchListingsDataFromOlxApi(minPrice, maxPrice, offset);
 
             if (listingsData.length === 0) {
-                return;
+                break;
             }
-
-            consoleLog(`[${this.source}] Synchronizing page ${1 + offset / OLX_LISTINGS_PAGE_SIZE} (${range}).`);
 
             const liveListingsChunk = listingsData.map((listing) => ({
                 id: listing.id,
@@ -65,16 +60,18 @@ export class IndexSynchronizerOlxRo extends IndexSynchronizer {
                 data: listing,
             }));
 
-            const newMarketLiveListings = [];
-
-            await this.syncCurrentMarketListingsFromMarket(liveListingsChunk, newMarketLiveListings);
-
-            marketLiveListings.push(...newMarketLiveListings);
+            liveListingsToSync.push(...liveListingsChunk);
 
             offset += OLX_LISTINGS_PAGE_SIZE;
 
             await delay(getRandomRestingDelay());
         }
+
+        consoleLog(`[${this.source}] Synchronizing listings with price between ${range} euros.`);
+
+        await this.syncCurrentMarketListingsFromMarket(liveListingsToSync, newMarketLiveListings);
+
+        marketLiveListings.push(...newMarketLiveListings);
     }
 
     async fetchVersionDataAndImageUrls(liveListing) {
