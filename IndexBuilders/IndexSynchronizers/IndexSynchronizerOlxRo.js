@@ -69,6 +69,10 @@ export class IndexSynchronizerOlxRo extends IndexSynchronizer {
 
         consoleLog(`[${this.source}] Synchronizing listings with price between ${range} euros.`);
 
+        if (liveListingsToSync.length === 0) {
+            return;
+        }
+
         await this.syncCurrentMarketListingsFromMarket(liveListingsToSync, newMarketLiveListings);
 
         marketLiveListings.push(...newMarketLiveListings);
