@@ -1,4 +1,11 @@
-import { DB_COLLECTION_APARTMENTS, DB_COLLECTION_LISTINGS, DB_COLLECTION_STATS } from '../Constants.js';
+import {
+    DB_COLLECTION_APARTMENTS,
+    DB_COLLECTION_LISTINGS,
+    DB_COLLECTION_STATS,
+    INDEX_TYPE_APARTMENTS,
+    INDEX_TYPE_LISTINGS,
+    INDEX_TYPE_SOLD_APARTMENTS,
+} from '../Constants.js';
 import { DbClient } from '../DbLayer/DbClient.js';
 import { consoleLog } from '../Helpers/Utils.js';
 import { DbCollection } from '../DbLayer/DbCollection.js';
@@ -60,7 +67,7 @@ export class StatsMaker {
             delete result._id;
             result.roomsCount = extraFilters.roomsCount ? extraFilters.roomsCount : null;
             result.newApartment = extraFilters.hasNewApartment ? extraFilters.hasNewApartment : null;
-            result.indexType = 'listings';
+            result.indexType = INDEX_TYPE_LISTINGS;
             result.startDate = this.startDate;
             result.endDate = this.endDate;
             results.push(result);
@@ -95,7 +102,7 @@ export class StatsMaker {
             delete result._id;
             result.roomsCount = extraFilters.roomsCount ? extraFilters.roomsCount : null;
             result.newApartment = extraFilters.hasNewApartment ? extraFilters.hasNewApartment : null;
-            result.indexType = 'apartments';
+            result.indexType = INDEX_TYPE_APARTMENTS;
             result.startDate = this.startDate;
             result.endDate = this.endDate;
             results.push(result);
@@ -130,7 +137,7 @@ export class StatsMaker {
             delete result._id;
             result.roomsCount = extraFilters.roomsCount ? extraFilters.roomsCount : null;
             result.newApartment = extraFilters.hasNewApartment ? extraFilters.hasNewApartment : null;
-            result.indexType = 'soldApartments';
+            result.indexType = INDEX_TYPE_SOLD_APARTMENTS;
             result.startDate = this.startDate;
             result.endDate = this.endDate;
             results.push(result);

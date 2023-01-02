@@ -48,7 +48,7 @@ export const URL_XML_ANUNTUL_LISTINGS_BUCHAREST_2 = 'https://www.anuntul.ro/site
 export const URL_XML_ANUNTUL_LISTINGS_BUCHAREST_3 = 'https://www.anuntul.ro/sitemap-category_5.xml';
 export const URL_XML_ANUNTUL_LISTINGS_BUCHAREST_4 = 'https://www.anuntul.ro/sitemap-category_6.xml';
 export const URL_PUBLI24_LISTINGS_BUCHAREST =
-    'https://www.publi24.ro/anunturi/imobiliare/de-vanzare/apartamente/bucuresti/?pag=1&ordered=asc&orderby=price&pagesize=20000';
+    'https://www.publi24.ro/anunturi/imobiliare/de-vanzare/apartamente/bucuresti/?pag=1&ordered=asc&orderby=price&pagesize=20000&minprice=10000';
 
 export const HTTP_STATUS_CODE_OK = 200;
 
