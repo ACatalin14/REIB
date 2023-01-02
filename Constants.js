@@ -37,11 +37,6 @@ export const DB_COLLECTION_LIVE_LISTINGS = 'liveListings';
 export const DB_COLLECTION_SYNC_STATS = 'syncStats';
 export const DB_COLLECTION_STATS = 'stats';
 
-// TODO: Update this array as the implementation goes on
-export const SOURCE_TO_DB_COLLECTION_MAP = {
-    // [SOURCE_IMOBILIARE_RO]: DB_COLLECTION_IMOBILIARE,
-};
-
 export const IMAGES_FETCH_MODE_PARALLEL = 'parallel';
 export const IMAGES_FETCH_MODE_SEQUENTIAL = 'sequential';
 

@@ -1,5 +1,6 @@
 import { IndexSynchronizer } from './IndexSynchronizer.js';
-import { consoleLog } from '../../Helpers/Utils.js';
+import { callUntilSuccess, consoleLog } from '../../Helpers/Utils.js';
+import { RETRY_IMAGES_FETCH_PUBLI24_DELAY } from '../../Constants.js';
 
 export class IndexSynchronizerPubli24Ro extends IndexSynchronizer {
     async sync() {
@@ -32,5 +33,21 @@ export class IndexSynchronizerPubli24Ro extends IndexSynchronizer {
         // Consider the listing to be up-to-date if day and month are the same,
         // since fetched live listings contain only {dd month}
         return lastMonth !== liveMonth || lastDay !== liveDay;
+    }
+
+    async fetchVersionDataFromLiveListing(liveListing) {
+        const versionData = await this.fetchVersionDataAndImageUrls(liveListing);
+
+        versionData.images = await callUntilSuccess(
+            this.fetchBinHashesFromUrls.bind(this),
+            [versionData.imageUrls],
+            `[${this.source}] Cannot fetch all images due to possible bot detection.`,
+            RETRY_IMAGES_FETCH_PUBLI24_DELAY,
+            3
+        );
+
+        delete versionData.imageUrls;
+
+        return versionData;
     }
 }
