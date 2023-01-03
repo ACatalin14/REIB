@@ -18,7 +18,12 @@ export class DataExtractorAnuntulRo extends DataExtractor {
     hasValidListingDetails() {
         // Check if retrieved page does contain listing details. If not found, it is not
         // a valid listing page (search page with multiple results, 404 not found page, etc.)
-        if (!this.hasBasePriceDetails() || !this.hasSurfaceDetails() || !this.hasRoomsCountDetails()) {
+        if (
+            !this.hasBasePriceDetails() ||
+            !this.hasSurfaceDetails() ||
+            !this.hasRoomsCountDetails() ||
+            this.hasExpiredMessageBox()
+        ) {
             return false;
         }
 
@@ -70,6 +75,13 @@ export class DataExtractorAnuntulRo extends DataExtractor {
         const roomsCountFromDescription = this.extractRoomsCountFromDescription();
 
         return roomsCountFromUrl || roomsCountFromTitle || roomsCountFromDescription;
+    }
+
+    hasExpiredMessageBox() {
+        const $ = load(this.html);
+        const expiredBoxes = $('div.butt-right.butt-red');
+
+        return expiredBoxes.length > 0;
     }
 
     extractBasePrice() {

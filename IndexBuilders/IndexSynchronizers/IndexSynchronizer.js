@@ -111,11 +111,24 @@ export class IndexSynchronizer extends IndexBuilder {
                     url: liveListing.url,
                     lastModified: liveListing.lastModified,
                 };
+                const wasSoldBefore = await this.checkListingWasSoldBefore(liveListing.id);
+
+                if (wasSoldBefore) {
+                    await this.enableListingForResell(liveListing.id);
+                    await this.updateMarketListing(liveListing);
+                    marketLiveListings.push(liveListingDbProps);
+                    await this.liveListingsSubCollection.updateOne({ id: listingId }, { $set: liveListingDbProps });
+                    consoleLog(`[${this.source}] Fetched and updated listing for resell in database. Waiting...`);
+                    await delay(getRandomRestingDelay());
+                    continue;
+                }
 
                 if (!wasLiveBefore) {
                     await this.createMarketListing(liveListing);
                     liveListingsToCreate.push(liveListingDbProps);
                     marketLiveListings.push(liveListingDbProps);
+                    dbListingsIds.push(liveListingDbProps.id);
+                    dbListingsMap[liveListingDbProps.id] = liveListingDbProps;
                     consoleLog(`[${this.source}] Fetched and created listing in database. Waiting...`);
                     await delay(getRandomRestingDelay());
                     continue;
@@ -141,6 +154,24 @@ export class IndexSynchronizer extends IndexBuilder {
 
     checkListingIsOutdated(lastKnownVersionDate, liveVersionDate) {
         return lastKnownVersionDate < liveVersionDate;
+    }
+
+    async checkListingWasSoldBefore(listingId) {
+        const soldListings = await this.listingsSubCollection.find({ id: listingId, 'versions.sold': true });
+
+        return soldListings.length > 0;
+    }
+
+    async enableListingForResell(listingId) {
+        await this.listingsSubCollection.updateOne(
+            { id: listingId, 'versions.sold': true },
+            {
+                $set: {
+                    'versions.$.closeDate': null,
+                    'versions.$.sold': false,
+                },
+            }
+        );
     }
 
     async createMarketListing(liveListing) {
