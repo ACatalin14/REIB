@@ -1,4 +1,4 @@
-import { consoleLog } from '../../Helpers/Utils.js';
+import { consoleLog, getRandomRestingDelay } from '../../Helpers/Utils.js';
 import { IndexInitializer } from './IndexInitializer.js';
 import {
     LISTING_PRICE_MIN_THRESHOLD,
@@ -6,6 +6,7 @@ import {
     OLX_LISTINGS_PAGE_SIZE,
     OLX_PRICE_FILTER_STEP,
 } from '../../Constants.js';
+import delay from 'delay';
 
 export class IndexInitializerOlxRo extends IndexInitializer {
     async start() {
@@ -38,16 +39,17 @@ export class IndexInitializerOlxRo extends IndexInitializer {
 
         const strMaxPrice = maxPrice ? maxPrice : 'Infinity';
         const range = `${minPrice} - ${strMaxPrice}`;
+        let allLiveListingsToInit = [];
+        let allListingsToInit = [];
+
         consoleLog(`[${this.source}] Initializing listings with price between ${range} euros.`);
 
         while (true) {
             const listingsData = await this.fetchListingsDataFromOlxApi(minPrice, maxPrice, offset);
 
             if (listingsData.length === 0) {
-                return;
+                break;
             }
-
-            consoleLog(`[${this.source}] Initializing page ${1 + offset / OLX_LISTINGS_PAGE_SIZE} (${range})`);
 
             const liveListingsToInit = this.getLiveListingsToInit(listingsData, initializedListingsIdsSet);
 
@@ -56,8 +58,7 @@ export class IndexInitializerOlxRo extends IndexInitializer {
                 continue;
             }
 
-            // Insert new listings to initialize
-            await this.liveListingsSubCollection.insertMany(liveListingsToInit);
+            allLiveListingsToInit.push(...liveListingsToInit);
 
             const listingsToInit = listingsData
                 .filter((listing) => !initializedListingsIdsSet.has(listing.id))
@@ -68,10 +69,25 @@ export class IndexInitializerOlxRo extends IndexInitializer {
                     data: listing,
                 }));
 
-            await this.handleLiveListingsToInitialize(listingsToInit);
+            allListingsToInit.push(...listingsToInit);
 
             offset += OLX_LISTINGS_PAGE_SIZE;
+
+            await delay(getRandomRestingDelay());
         }
+
+        // remove clones
+        allLiveListingsToInit = allLiveListingsToInit.filter((liveListing, index, self) => {
+            return index === self.findIndex((l) => l.id === liveListing.id);
+        });
+
+        allListingsToInit = allListingsToInit.filter((listing, index, self) => {
+            return index === self.findIndex((l) => l.id === listing.id);
+        });
+
+        // Insert new listings to initialize
+        await this.liveListingsSubCollection.insertMany(allLiveListingsToInit);
+        await this.handleLiveListingsToInitialize(allListingsToInit);
     }
 
     async fetchVersionDataAndImageUrls(liveListing) {
