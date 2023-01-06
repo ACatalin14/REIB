@@ -256,12 +256,15 @@ export class DataExtractorOlxRo extends DataExtractor {
     }
 
     extractHasNewApartmentWordsInTitleAndDescription() {
-        const regex = /(vitanul nou|cartierul nou|oborul nou|vadul nou|satu nou|bl\. nou|bl nou|dumbrava noua|vatra noua|casa noua|scoala noua|intrarea noua|insulita noua|biserica noua|strada noua|delea noua)/g;
+        const regex =
+            /(vitanul nou|cartierul nou|oborul nou|vadul nou|satu nou|bl\. nou|bl nou|dumbrava noua|vatra noua|casa noua|scoala noua|intrarea noua|insulita noua|biserica noua|strada noua|delea noua)/g;
         const cleanTitle = this.data.title.toLowerCase().replace(regex, '');
         const cleanDescription = this.data.description.toLowerCase().replace(regex, '');
 
         const titleMatches = cleanTitle.match(/([^a-z]nou[a]?$|^nou[^a-z]|[^a-z]nou[a]?[^a-z]|dezvoltator)/i);
-        const descriptionMatches = cleanDescription.match(/([^a-z]nou[a]?$|^nou[^a-z]|[^a-z]nou[a]?[^a-z]|dezvoltator)/i);
+        const descriptionMatches = cleanDescription.match(
+            /([^a-z]nou[a]?$|^nou[^a-z]|[^a-z]nou[a]?[^a-z]|dezvoltator)/i
+        );
 
         return !!titleMatches || !!descriptionMatches;
     }
