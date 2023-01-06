@@ -257,7 +257,7 @@ export class DataExtractorOlxRo extends DataExtractor {
 
     extractHasNewApartmentWordsInTitleAndDescription() {
         const regex =
-            /(vitanul nou|cartierul nou|oborul nou|vadul nou|satu nou|bl\. nou|bl nou|dumbrava noua|vatra noua|casa noua|scoala noua|intrarea noua|insulita noua|biserica noua|strada noua|delea noua)/g;
+            /(vitanul nou|cartierul nou|oborul nou|vadul nou|satu nou|bl\. nou|bl nou|dumbrava noua|vatra noua|casa noua|scoala noua|intrarea noua|insulita noua|biserica noua|strada noua|delea noua|noua casa)/g;
         const cleanTitle = this.data.title.toLowerCase().replace(regex, '');
         const cleanDescription = this.data.description.toLowerCase().replace(regex, '');
 
