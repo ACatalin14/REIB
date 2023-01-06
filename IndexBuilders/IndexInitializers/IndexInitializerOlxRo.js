@@ -76,6 +76,11 @@ export class IndexInitializerOlxRo extends IndexInitializer {
             await delay(getRandomRestingDelay());
         }
 
+        if (allLiveListingsToInit.length === 0) {
+            // No listings to initialize
+            return;
+        }
+
         // remove clones
         allLiveListingsToInit = allLiveListingsToInit.filter((liveListing, index, self) => {
             return index === self.findIndex((l) => l.id === liveListing.id);
@@ -88,6 +93,7 @@ export class IndexInitializerOlxRo extends IndexInitializer {
         // Insert new listings to initialize
         await this.liveListingsSubCollection.insertMany(allLiveListingsToInit);
         await this.handleLiveListingsToInitialize(allListingsToInit);
+        allLiveListingsToInit.forEach((liveListing) => initializedListingsIdsSet.add(liveListing.id));
     }
 
     async fetchVersionDataAndImageUrls(liveListing) {
