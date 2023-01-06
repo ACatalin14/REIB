@@ -234,17 +234,17 @@ export class IndexSynchronizer extends IndexBuilder {
         );
         const apartment = await this.apartmentsCollection.findOne({ _id: listing.apartment }, {});
 
-        if (!this.listingVersionSignificantlyChanged(listing, newVersionData)) {
-            consoleLog(`[${this.source}] Listing has not significantly changed. No need for update.`);
-            return false;
-        }
-
         if (newVersionData.roomsCount !== apartment.roomsCount || newVersionData.hasNewApartment !== apartment.isNew) {
             // Rare case: One of the most important attributes has changed, so must update linked apartment
             consoleLog(`[${this.source}] Updating linked apartment for existing listing...`);
             await this.updateListingWhenLinkedApartmentChanges(listing, apartment, newVersionData);
             this.linkedApartmentsUpdatedCount++;
             return true;
+        }
+
+        if (!this.listingVersionSignificantlyChanged(listing, newVersionData)) {
+            consoleLog(`[${this.source}] Listing has not significantly changed. No need for update.`);
+            return false;
         }
 
         // Last version is referring to the same apartment as it was referring before the listing's update
