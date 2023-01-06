@@ -234,4 +234,35 @@ export class DataExtractorOlxRo extends DataExtractor {
             return photo.link.replace('{width}', photo.width).replace('{height}', photo.height);
         });
     }
+
+    extractHasNewApartment() {
+        const hasMentionedTVA = this.extractHasMentionedTVA();
+
+        if (hasMentionedTVA) {
+            // Any listing mentioning TVA usually presents a new apartment
+            return true;
+        }
+
+        const constructionYear = this.extractConstructionYear();
+
+        // OLX does not offer exact year, but a range, so check latest range
+        if (!constructionYear || !constructionYear.match(/dupa 2000/i)) {
+            // No year specified, or an old range has been specified, so consider apartment to be old
+            return false;
+        }
+
+        // There is a chance the apartment is new (After 2000), so check for hint words in the listing
+        return this.extractHasNewApartmentWordsInTitleAndDescription();
+    }
+
+    extractHasNewApartmentWordsInTitleAndDescription() {
+        const regex = /(vitanul nou|cartierul nou|oborul nou|vadul nou|satu nou|bl\. nou|bl nou|dumbrava noua|vatra noua|casa noua|scoala noua|intrarea noua|insulita noua|biserica noua|strada noua|delea noua)/g;
+        const cleanTitle = this.data.title.toLowerCase().replace(regex, '');
+        const cleanDescription = this.data.description.toLowerCase().replace(regex, '');
+
+        const titleMatches = cleanTitle.match(/([^a-z]nou[a]?$|^nou[^a-z]|[^a-z]nou[a]?[^a-z]|dezvoltator)/i);
+        const descriptionMatches = cleanDescription.match(/([^a-z]nou[a]?$|^nou[^a-z]|[^a-z]nou[a]?[^a-z]|dezvoltator)/i);
+
+        return !!titleMatches || !!descriptionMatches;
+    }
 }
