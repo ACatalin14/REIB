@@ -25,10 +25,6 @@ export class DataExtractor {
         // To be implemented
     }
 
-    extractHasNewApartmentWordsInTitleAndDescription() {
-        // To be implemented
-    }
-
     extractRoomsCount() {
         // To be implemented
     }
@@ -80,8 +76,8 @@ export class DataExtractor {
             return true;
         }
 
-        // If no TVA and construction year set, look for specific words in title & description
-        return this.extractHasNewApartmentWordsInTitleAndDescription();
+        // Else, it is considered an old apartment
+        return false;
     }
 
     extractPrice(basePrice, surface, hasSeparateTVA) {

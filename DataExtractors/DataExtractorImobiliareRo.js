@@ -156,22 +156,6 @@ export class DataExtractorImobiliareRo extends DataExtractor {
         return tvaFromPrice.length > 0 || tvaFromTitle.length > 0 || tvaFromDescription.length > 0;
     }
 
-    extractHasNewApartmentWordsInTitleAndDescription() {
-        const $ = load(this.html);
-
-        const containsNewApartmentStrings = function () {
-            const position1 = $(this).text().toLowerCase().indexOf('nou');
-            const position2 = $(this).text().toLowerCase().indexOf('dezvoltator');
-
-            return position1 !== -1 || position2 !== -1;
-        };
-
-        const wordsFromTitle = $('h1[data-monitive-marker-detalii]').filter(containsNewApartmentStrings);
-        const wordsFromDescription = $('#b_detalii_text .collapsible_content').filter(containsNewApartmentStrings);
-
-        return wordsFromTitle.length > 0 || wordsFromDescription.length > 0;
-    }
-
     extractRoomsCount() {
         if (this.dataLayerText.indexOf('propertyNumberOfRooms') !== -1) {
             const roomsStartPos = this.dataLayerText.indexOf('propertyNumberOfRooms') + 21 + 4;

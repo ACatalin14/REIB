@@ -141,22 +141,6 @@ export class DataExtractorPubli24Ro extends DataExtractor {
         return tvaFromTitle.length > 0 || tvaFromDescription.length > 0;
     }
 
-    extractHasNewApartmentWordsInTitleAndDescription() {
-        const $ = load(this.html);
-
-        const containsNewApartmentStrings = function () {
-            const position1 = $(this).text().toLowerCase().indexOf('nou');
-            const position2 = $(this).text().toLowerCase().indexOf('dezvoltator');
-
-            return position1 !== -1 || position2 !== -1;
-        };
-
-        const wordsFromTitle = $('h1[itemprop=name]').filter(containsNewApartmentStrings);
-        const wordsFromDescription = $('span[itemprop=description]').filter(containsNewApartmentStrings);
-
-        return wordsFromTitle.length > 0 || wordsFromDescription.length > 0;
-    }
-
     extractRoomsCount() {
         const roomsCountFromUrl = this.extractRoomsCountFromUrl();
 

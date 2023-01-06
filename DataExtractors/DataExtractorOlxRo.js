@@ -126,13 +126,6 @@ export class DataExtractorOlxRo extends DataExtractor {
         return !!titleMatches || !!descriptionMatches;
     }
 
-    extractHasNewApartmentWordsInTitleAndDescription() {
-        const titleMatches = this.data.title.toLowerCase().match(/(nou|dezvoltator)/);
-        const descriptionMatches = this.data.description.toLowerCase().match(/(nou|dezvoltator)/);
-
-        return !!titleMatches || !!descriptionMatches;
-    }
-
     extractRoomsCount() {
         switch (this.data.category.id) {
             case 1163:
