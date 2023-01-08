@@ -234,10 +234,14 @@ export class SmartRequester {
     async getWebpImagePromise(config) {
         return new Promise(async (resolve, reject) => {
             const formattedUrl = config.url.replace(/[/\\:;*?"'<>|.,=]/g, '');
-            const filePathNoExt = `./tmp/${formattedUrl}`;
+            let filePathNoExt = `./tmp/${formattedUrl}`;
 
             if (!fs.existsSync('./tmp/')) {
                 fs.mkdirSync('./tmp/');
+            }
+
+            while (fs.existsSync(`${filePathNoExt}.webp`)) {
+                filePathNoExt = filePathNoExt + '0';
             }
 
             const fileWriter = fs.createWriteStream(`${filePathNoExt}.webp`);
