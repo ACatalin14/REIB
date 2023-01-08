@@ -156,7 +156,7 @@ export class IndexBuilder {
 
         response = await callUntilSuccess(
             this.smartRequester.get.bind(this.smartRequester),
-            [URL_PUBLI24_LISTINGS_BUCHAREST, { timeout: 90000 }],
+            [URL_PUBLI24_LISTINGS_BUCHAREST, { timeout: 120000 }],
             `[${this.source}] Error while fetching live listings from: ${URL_PUBLI24_LISTINGS_BUCHAREST}.`,
             RETRY_XML_FETCH_DELAY
         );
@@ -167,10 +167,6 @@ export class IndexBuilder {
         const liveListings = [];
 
         $('li[location]').each((index, element) => {
-            if (index < 4) {
-                return;
-            }
-
             const link = $('a', element);
             const liveListing = {
                 id: $(element).attr('location'),

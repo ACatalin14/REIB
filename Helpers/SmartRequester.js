@@ -217,11 +217,18 @@ export class SmartRequester {
             });
         }
 
-        if (this.imagesReferer !== REFERER_OLX_RO) {
-            return Jimp.read(config);
+        if (this.imagesReferer === REFERER_OLX_RO) {
+            // OLX always gives webp images
+            return this.getWebpImagePromise(config);
         }
 
-        return this.getWebpImagePromise(config);
+        return Jimp.read(config).catch((error) => {
+            if (error.message === 'Unsupported MIME type: image/webp') {
+                return this.getWebpImagePromise(config);
+            }
+
+            throw error;
+        });
     }
 
     async getWebpImagePromise(config) {
