@@ -127,7 +127,7 @@ export class IndexSynchronizer extends IndexBuilder {
                     await this.createMarketListing(liveListing);
                     liveListingsToCreate.push(liveListingDbProps);
                     marketLiveListings.push(liveListingDbProps);
-                    dbListingsIds.push(liveListingDbProps.id);
+                    dbListingsIds.add(liveListingDbProps.id);
                     dbListingsMap[liveListingDbProps.id] = liveListingDbProps;
                     consoleLog(`[${this.source}] Fetched and created listing in database. Waiting...`);
                     await delay(getRandomRestingDelay());
