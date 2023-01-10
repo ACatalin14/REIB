@@ -49,20 +49,22 @@ export class IndexBuilder {
         const $ = load(response.data, { xmlMode: true });
         let xmlListings = [];
 
-        $('loc').each((index, element) => {
-            const url = $(element).text();
-            xmlListings[index] = {
+        $('url').each((index, element) => {
+            const url = $('loc', element).text();
+            const lastmod = $('lastmod', element);
+
+            if (lastmod.length === 0) {
+                return;
+            }
+
+            xmlListings.push({
                 url: url,
                 id: this.getListingIdFromUrl(url),
-                lastModified: null,
-            };
+                lastModified: new Date(lastmod.text()),
+            });
         });
 
-        $('lastmod').each((index, element) => {
-            xmlListings[index].lastModified = new Date($(element).text());
-        });
-
-        consoleLog(`[${this.source}] Found ${xmlListings.length} listings in XML.`);
+        consoleLog(`[${this.source}] Found ${xmlListings.length} candidate listings in XML.`);
 
         return xmlListings;
     }
