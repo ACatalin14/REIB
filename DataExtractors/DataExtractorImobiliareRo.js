@@ -314,9 +314,9 @@ export class DataExtractorImobiliareRo extends DataExtractor {
         try {
             consoleLog(`[${this.source}] Extracting image urls from iframe ${iframeId}...`);
 
-            const iframeElementHandle = await browserPage.waitForSelector(iframeId, { timeout: 5000 });
+            const iframeElementHandle = await browserPage.waitForSelector(iframeId, { timeout: 10000 });
             const frame = await iframeElementHandle.contentFrame();
-            await frame.waitForSelector('#slider_imagini > div.swipe-wrap > div', { timeout: 5000 });
+            await frame.waitForSelector('#slider_imagini > div.swipe-wrap > div', { timeout: 10000 });
             const html = await frame.content();
 
             const $ = load(html);
