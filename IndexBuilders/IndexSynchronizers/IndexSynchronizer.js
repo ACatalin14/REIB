@@ -81,20 +81,14 @@ export class IndexSynchronizer extends IndexBuilder {
     }
 
     async syncCurrentMarketListingsFromMarket(liveListings, marketLiveListings = []) {
-        const liveListingsToCreate = [];
-
         consoleLog(`[${this.source}] Synchronizing current market listings...`);
 
-        await this.handleLiveListingsToSynchronize(liveListings, liveListingsToCreate, marketLiveListings);
-
-        if (liveListingsToCreate.length > 0) {
-            await this.liveListingsSubCollection.insertMany(liveListingsToCreate);
-        }
+        await this.handleLiveListingsToSynchronize(liveListings, marketLiveListings);
 
         consoleLog(`[${this.source}] Synchronized current market listings.`);
     }
 
-    async handleLiveListingsToSynchronize(liveListings, liveListingsToCreate, marketLiveListings = []) {
+    async handleLiveListingsToSynchronize(liveListings, marketLiveListings = []) {
         const dbListingsRecords = await this.liveListingsSubCollection.find({}, { _id: 0, id: 1, lastModified: 1 });
         const dbListingsMap = indexObjectsByKey(dbListingsRecords, 'id');
         const dbListingsIds = new Set(Object.keys(dbListingsMap));
@@ -125,8 +119,8 @@ export class IndexSynchronizer extends IndexBuilder {
 
                 if (!wasLiveBefore) {
                     await this.createMarketListing(liveListing);
-                    liveListingsToCreate.push(liveListingDbProps);
                     marketLiveListings.push(liveListingDbProps);
+                    await this.liveListingsSubCollection.insertOne(liveListingDbProps);
                     dbListingsIds.add(liveListingDbProps.id);
                     dbListingsMap[liveListingDbProps.id] = liveListingDbProps;
                     consoleLog(`[${this.source}] Fetched and created listing in database. Waiting...`);
