@@ -289,7 +289,7 @@ export class DataExtractorImobiliareRo extends DataExtractor {
             '#modCookies > div > div > div > div.exp > div.row.butoane-actiune.vizibil-informare > div:nth-child(2) > a'
         );
 
-        await delay(250);
+        await delay(500);
 
         await this.clickElement(
             browserPage,
