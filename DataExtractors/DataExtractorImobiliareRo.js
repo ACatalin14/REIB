@@ -7,6 +7,7 @@ import {
     RETRY_IMAGES_URLS_GET_DELAY,
 } from '../Constants.js';
 import { callUntilSuccess, consoleLog } from '../Helpers/Utils.js';
+import delay from 'delay';
 
 export class DataExtractorImobiliareRo extends DataExtractor {
     setDataSource(html) {
@@ -283,8 +284,17 @@ export class DataExtractorImobiliareRo extends DataExtractor {
             return [];
         }
 
-        await browserPage.click(
-            '#galerie_detalii > div.swiper.main_slider > div.swiper-wrapper > div > a > img.front_image'
+        await this.clickElement(
+            browserPage,
+            '#modCookies > div > div > div > div.exp > div.row.butoane-actiune.vizibil-informare > div:nth-child(2) > a'
+        );
+
+        await delay(250);
+
+        await this.clickElement(
+            browserPage,
+            '#galerie_detalii > div.swiper.main_slider > div.swiper-wrapper > div > a > img.front_image',
+            `[${this.source}] Cannot extract image URL's. Front image not found.`
         );
 
         return await callUntilSuccess(
@@ -294,6 +304,21 @@ export class DataExtractorImobiliareRo extends DataExtractor {
             RETRY_IMAGES_URLS_GET_DELAY,
             3
         );
+    }
+
+    async clickElement(browserPage, selector, throwErrorMessage = null) {
+        let isVisible = true;
+
+        await browserPage.waitForSelector(selector, { visible: true, timeout: 1000 }).catch(() => (isVisible = false));
+
+        if (isVisible) {
+            await browserPage.click(selector);
+            return;
+        }
+
+        if (throwErrorMessage) {
+            throw new Error(throwErrorMessage);
+        }
     }
 
     async extractImageUrlsFromIframes(browserPage) {
@@ -314,9 +339,9 @@ export class DataExtractorImobiliareRo extends DataExtractor {
         try {
             consoleLog(`[${this.source}] Extracting image urls from iframe ${iframeId}...`);
 
-            const iframeElementHandle = await browserPage.waitForSelector(iframeId, { timeout: 10000 });
+            const iframeElementHandle = await browserPage.waitForSelector(iframeId, { timeout: 5000 });
             const frame = await iframeElementHandle.contentFrame();
-            await frame.waitForSelector('#slider_imagini > div.swipe-wrap > div', { timeout: 10000 });
+            await frame.waitForSelector('#slider_imagini > div.swipe-wrap > div', { timeout: 5000 });
             const html = await frame.content();
 
             const $ = load(html);
