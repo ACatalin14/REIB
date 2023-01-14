@@ -448,6 +448,8 @@ export class IndexBuilder {
         const updatedListing = this.getUpdatedListingWithNewVersionData(listing, newVersionData);
         const similarApartment = await this.fetchSimilarApartmentForListing(updatedListing);
 
+        updatedListing._id = listing._id;
+
         if (similarApartment) {
             await this.addLinkedListingToApartment(similarApartment, updatedListing);
         } else {
