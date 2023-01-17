@@ -35,6 +35,7 @@ export class IndexSynchronizer extends IndexBuilder {
         this.listingsAddedCount = 0;
         this.listingsUpdatedCount = 0;
         this.linkedApartmentsUpdatedCount = 0;
+        this.republishedListingsCount = 0;
     }
 
     async sync() {
@@ -166,6 +167,8 @@ export class IndexSynchronizer extends IndexBuilder {
                 },
             }
         );
+
+        this.republishedListingsCount++;
     }
 
     async createMarketListing(liveListing) {
@@ -267,6 +270,7 @@ export class IndexSynchronizer extends IndexBuilder {
             newListingsCount: this.listingsAddedCount,
             updatedListingsCount: this.listingsUpdatedCount,
             updatedLinkedApartmentsCount: this.linkedApartmentsUpdatedCount,
+            republishedListingsCount: this.republishedListingsCount,
         });
     }
 }
