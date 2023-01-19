@@ -44,12 +44,15 @@ export class IndexSynchronizer extends IndexBuilder {
 
     async fetchMissingLiveListingsFromMarket(marketLiveListings) {
         try {
-            const dbListingsWithIds = await this.liveListingsSubCollection.find({}, { projection: { _id: 0, id: 1 } });
+            const dbLiveListingsWithIds = await this.liveListingsSubCollection.find(
+                {},
+                { projection: { _id: 0, id: 1 } }
+            );
 
-            const dbListingsIdsSet = new Set(mapObjectsToValueOfKey(dbListingsWithIds, 'id'));
-            const marketListingsIdsSet = new Set(mapObjectsToValueOfKey(marketLiveListings, 'id'));
+            const dbLiveListingsIdsSet = new Set(mapObjectsToValueOfKey(dbLiveListingsWithIds, 'id'));
+            const marketLiveListingsIdsSet = new Set(mapObjectsToValueOfKey(marketLiveListings, 'id'));
 
-            return [...dbListingsIdsSet].filter((dbListing) => !marketListingsIdsSet.has(dbListing));
+            return [...dbLiveListingsIdsSet].filter((dbListing) => !marketLiveListingsIdsSet.has(dbListing));
         } catch (error) {
             consoleLog(`[${this.source}] Cannot fetch deleted listings from database.`);
             throw error;
@@ -60,7 +63,7 @@ export class IndexSynchronizer extends IndexBuilder {
         consoleLog(`[${this.source}] Synchronizing closed listings...`);
 
         await this.listingsSubCollection.updateMany(
-            { id: { $in: deletedListingsIds } },
+            { id: { $in: deletedListingsIds }, 'versions.sold': { $ne: true } },
             {
                 $set: {
                     'versions.$[listingVersion].closeDate': getSyncDate(),
@@ -239,12 +242,27 @@ export class IndexSynchronizer extends IndexBuilder {
             return true;
         }
 
-        if (!this.listingVersionSignificantlyChanged(listing, newVersionData)) {
-            consoleLog(`[${this.source}] Listing has not significantly changed. No need for update.`);
-            return false;
+        // New version is referring to the same apartment as it was referring before the listing's update
+        if (this.listingVersionSignificantlyChanged(listing, newVersionData)) {
+            await this.updateListingWithApartmentWhenNewSignificantVersionIsAdded(apartment, listing, newVersionData);
+            return true;
         }
 
-        // Last version is referring to the same apartment as it was referring before the listing's update
+        const newImages = this.similarityDetector.getDifferenceBetweenHashesLists(
+            newVersionData.images,
+            listing.images
+        );
+
+        if (newImages.length > 0) {
+            await this.updateListingWithApartmentWhenNewImagesFound(apartment, listing, newImages);
+            return true;
+        }
+
+        consoleLog(`[${this.source}] Listing has not significantly changed. No need for update.`);
+        return false;
+    }
+
+    async updateListingWithApartmentWhenNewSignificantVersionIsAdded(apartment, listing, newVersionData) {
         const updatedListing = this.getUpdatedListingWithNewVersionData(listing, newVersionData);
 
         await this.listingsSubCollection.updateOne(
@@ -258,8 +276,17 @@ export class IndexSynchronizer extends IndexBuilder {
         );
 
         await this.updateApartmentById(updatedListing.apartment, { images: updatedApartmentImages });
+    }
 
-        return true;
+    async updateListingWithApartmentWhenNewImagesFound(apartment, listing, newImages) {
+        await this.listingsSubCollection.updateOne(
+            { id: listing.id, 'versions.sold': { $ne: true } },
+            { $addToSet: { images: { $each: newImages } } }
+        );
+
+        const updatedApartmentImages = this.similarityDetector.getUnionBetweenHashesLists(apartment.images, newImages);
+
+        await this.updateApartmentById(listing.apartment, { images: updatedApartmentImages });
     }
 
     async insertTodaySyncStats() {

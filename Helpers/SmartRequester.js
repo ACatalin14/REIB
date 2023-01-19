@@ -206,6 +206,7 @@ export class SmartRequester {
                 ...this.headersConfig,
                 referer: this.imagesReferer,
             },
+            timeout: 30000,
         };
 
         if (this.shouldUseProxies) {
@@ -248,7 +249,7 @@ export class SmartRequester {
             let response;
 
             try {
-                response = await this.get(config.url, { responseType: 'stream' });
+                response = await this.get(config.url, { responseType: 'stream', timeout: 30000 });
             } catch (error) {
                 reject(error);
                 return;

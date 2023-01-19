@@ -421,14 +421,12 @@ export class IndexBuilder {
     listingVersionSignificantlyChanged(listing, newVersion) {
         const oldVersions = [...listing.versions];
         const lastVersion = oldVersions.pop();
-        const newImages = this.similarityDetector.getDifferenceBetweenHashesLists(newVersion.images, listing.images);
 
         return (
             newVersion.hasSeparateTVA !== lastVersion.hasSeparateTVA ||
             newVersion.basePrice !== lastVersion.basePrice ||
             newVersion.price !== lastVersion.price ||
-            newVersion.surface !== lastVersion.surface ||
-            newImages.length > 0
+            newVersion.surface !== lastVersion.surface
         );
     }
 
