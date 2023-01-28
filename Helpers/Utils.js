@@ -23,6 +23,10 @@ export function useTestDb() {
     return getBooleanValueFromEnvVariable(process.env.USE_TEST_DB);
 }
 
+export function useContinuousSync() {
+    return getBooleanValueFromEnvVariable(process.env.USE_CONTINUOUS_SYNC);
+}
+
 function getBooleanValueFromEnvVariable(envVariable) {
     if (!envVariable) {
         return false;

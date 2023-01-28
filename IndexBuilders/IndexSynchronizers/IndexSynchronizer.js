@@ -60,6 +60,10 @@ export class IndexSynchronizer extends IndexBuilder {
     }
 
     async syncClosedListings(deletedListingsIds) {
+        if (deletedListingsIds.length === 0) {
+            consoleLog(`[${this.source}] There are no listings to be closed.`);
+        }
+
         consoleLog(`[${this.source}] Synchronizing closed listings...`);
 
         await this.listingsSubCollection.updateMany(

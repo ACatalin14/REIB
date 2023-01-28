@@ -66,7 +66,7 @@ export class StatsMaker {
             const result = await this.getAggregationResultForListings(extraFilters);
             delete result._id;
             result.roomsCount = extraFilters.roomsCount ? extraFilters.roomsCount : null;
-            result.newApartment = extraFilters.hasNewApartment ? extraFilters.hasNewApartment : null;
+            result.newApartment = extraFilters.hasNewApartment ?? null;
             result.indexType = INDEX_TYPE_LISTINGS;
             result.startDate = this.startDate;
             result.endDate = this.endDate;
@@ -77,7 +77,7 @@ export class StatsMaker {
     }
 
     async makeApartmentsStats() {
-        consoleLog('[stats] Computing distinct listings statistics...');
+        consoleLog('[stats] Computing apartments statistics...');
 
         const results = [];
 
@@ -101,7 +101,7 @@ export class StatsMaker {
             const result = await this.getAggregationResultForApartments(extraFilters);
             delete result._id;
             result.roomsCount = extraFilters.roomsCount ? extraFilters.roomsCount : null;
-            result.newApartment = extraFilters.hasNewApartment ? extraFilters.hasNewApartment : null;
+            result.newApartment = extraFilters.isNew ?? null;
             result.indexType = INDEX_TYPE_APARTMENTS;
             result.startDate = this.startDate;
             result.endDate = this.endDate;
@@ -112,7 +112,7 @@ export class StatsMaker {
     }
 
     async makeSoldApartmentsStats() {
-        consoleLog('[stats] Computing closed listings statistics...');
+        consoleLog('[stats] Computing sold apartments statistics...');
 
         const results = [];
 
@@ -136,7 +136,7 @@ export class StatsMaker {
             const result = await this.getAggregationResultForSoldApartments(extraFilters);
             delete result._id;
             result.roomsCount = extraFilters.roomsCount ? extraFilters.roomsCount : null;
-            result.newApartment = extraFilters.hasNewApartment ? extraFilters.hasNewApartment : null;
+            result.newApartment = extraFilters.isNew ?? null;
             result.indexType = INDEX_TYPE_SOLD_APARTMENTS;
             result.startDate = this.startDate;
             result.endDate = this.endDate;

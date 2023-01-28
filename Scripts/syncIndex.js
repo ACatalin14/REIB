@@ -9,14 +9,22 @@
 
 import { config } from 'dotenv';
 import { MainIndexSynchronizer } from '../IndexBuilders/IndexSynchronizers/MainIndexSynchronizer.js';
-import { setSyncDateForToday } from '../Helpers/Utils.js';
+import { consoleLog, setSyncDateForToday, useContinuousSync } from '../Helpers/Utils.js';
+import delay from 'delay';
 
 config(); // Use Environment Variables
-setSyncDateForToday(); // Set SYNC_DATE Env Var.
 
 async function main() {
+    setSyncDateForToday(); // Set SYNC_DATE Env Var.
+
     const mainIndexSynchronizer = new MainIndexSynchronizer();
     await mainIndexSynchronizer.sync();
+
+    if (useContinuousSync()) {
+        consoleLog('Starting a new synchronization in 1 hour...');
+        await delay(60 * 60 * 1000);
+        await main();
+    }
 }
 
 await main();
