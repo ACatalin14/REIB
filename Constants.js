@@ -2,6 +2,7 @@ export const RESTING_DELAY_MIN = 1000; // 1 seconds
 export const RESTING_DELAY_MAX = 3000; // 3 seconds
 export const RETRY_IMAGES_FETCH_DELAY = 65000; // 65 seconds
 export const RETRY_IMAGES_FETCH_PUBLI24_DELAY = 3000; // 3 seconds
+export const RETRY_IMAGES_FETCH_ANUNTUL_DELAY = 3000; // 3 seconds
 export const RETRY_IMAGES_URLS_GET_DELAY = 1000; // 1 seconds
 export const RETRY_DB_OPERATION_DELAY = 30000; // 30 seconds
 export const RETRY_XML_FETCH_DELAY = 5000; // 5 seconds

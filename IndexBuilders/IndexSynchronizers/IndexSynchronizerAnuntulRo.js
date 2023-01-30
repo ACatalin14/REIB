@@ -1,11 +1,12 @@
 import { IndexSynchronizer } from './IndexSynchronizer.js';
 import {
+    RETRY_IMAGES_FETCH_ANUNTUL_DELAY,
     URL_XML_ANUNTUL_LISTINGS_BUCHAREST_1,
     URL_XML_ANUNTUL_LISTINGS_BUCHAREST_2,
     URL_XML_ANUNTUL_LISTINGS_BUCHAREST_3,
     URL_XML_ANUNTUL_LISTINGS_BUCHAREST_4,
 } from '../../Constants.js';
-import { consoleLog } from '../../Helpers/Utils.js';
+import { callUntilSuccess, consoleLog } from '../../Helpers/Utils.js';
 
 export class IndexSynchronizerAnuntulRo extends IndexSynchronizer {
     getListingIdFromUrl(url) {
@@ -42,5 +43,21 @@ export class IndexSynchronizerAnuntulRo extends IndexSynchronizer {
             consoleLog(`[${this.source}] Cannot continue synchronization due to error:`);
             consoleLog(error);
         }
+    }
+
+    async fetchVersionDataFromLiveListing(liveListing) {
+        const versionData = await this.fetchVersionDataAndImageUrls(liveListing);
+
+        versionData.images = await callUntilSuccess(
+            this.fetchBinHashesFromUrls.bind(this),
+            [versionData.imageUrls],
+            `[${this.source}] Cannot fetch all images due to possible bot detection.`,
+            RETRY_IMAGES_FETCH_ANUNTUL_DELAY,
+            3
+        );
+
+        delete versionData.imageUrls;
+
+        return versionData;
     }
 }
