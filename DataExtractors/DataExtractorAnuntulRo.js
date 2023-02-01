@@ -7,11 +7,8 @@ import {
 } from '../Constants.js';
 
 export class DataExtractorAnuntulRo extends DataExtractor {
-    setDataSource(html) {
-        const $ = load(html);
-        const urlMeta = $('head > meta[property="og:url"]');
-
-        this.url = urlMeta.attr('content');
+    setDataSource(html, liveListing) {
+        this.url = liveListing.url;
         this.html = html;
     }
 
@@ -22,7 +19,7 @@ export class DataExtractorAnuntulRo extends DataExtractor {
             !this.hasBasePriceDetails() ||
             !this.hasSurfaceDetails() ||
             !this.hasRoomsCountDetails() ||
-            this.hasExpiredMessageBox()
+            this.hasExpiredMessageButton()
         ) {
             return false;
         }
@@ -39,7 +36,7 @@ export class DataExtractorAnuntulRo extends DataExtractor {
 
     hasBasePriceDetails() {
         const $ = load(this.html);
-        const priceElements = $('div.price.i-fr');
+        const priceElements = $('div.text-red-at.fs-2.ms-auto');
 
         if (priceElements.length === 0) {
             return false;
@@ -52,10 +49,11 @@ export class DataExtractorAnuntulRo extends DataExtractor {
 
     hasSurfaceDetails() {
         const $ = load(this.html);
-        const surfaceElements = $('.label-listing2 .i-dib').filter(function () {
+        const surfaceElements = $('div.anunt-etichete > span.d-inline-block.me-2').filter(function () {
             const matches = $(this)
                 .text()
                 .toLowerCase()
+                .trim()
                 .match(/^suprafata/);
             return matches !== null;
         });
@@ -77,16 +75,16 @@ export class DataExtractorAnuntulRo extends DataExtractor {
         return roomsCountFromUrl || roomsCountFromTitle || roomsCountFromDescription;
     }
 
-    hasExpiredMessageBox() {
+    hasExpiredMessageButton() {
         const $ = load(this.html);
-        const expiredBoxes = $('div.butt-right.butt-red');
+        const dangerButtons = $('div.btn-danger');
 
-        return expiredBoxes.length > 0;
+        return dangerButtons.length > 0 && dangerButtons.text().match(/inactiv/i);
     }
 
     extractBasePrice() {
         const $ = load(this.html);
-        const priceElement = $('div.price.i-fr');
+        const priceElement = $('div.text-red-at.fs-2.ms-auto');
 
         return parseFloat(priceElement.text().replace('.', '').replace(',', '.'));
     }
@@ -110,11 +108,11 @@ export class DataExtractorAnuntulRo extends DataExtractor {
             return matches !== null;
         };
 
-        const titleSelector = $('div.titlu-anunt > h1');
+        const titleSelector = $('h2');
 
         const tvaFromTitle = titleSelector.filter(containsPlusTVAString);
         const includedTvaFromTitle = titleSelector.filter(containsIncludedTVAString);
-        const includedTvaFromDescription = $('div.descriere-anunt').filter(containsIncludedTVAString);
+        const includedTvaFromDescription = this.getDescriptionCheerioElements().filter(containsIncludedTVAString);
 
         return includedTvaFromTitle.length > 0 || includedTvaFromDescription.length > 0
             ? false
@@ -129,8 +127,8 @@ export class DataExtractorAnuntulRo extends DataExtractor {
             return position !== -1;
         };
 
-        const tvaFromTitle = $('div.titlu-anunt > h1').filter(containsTVAString);
-        const tvaFromDescription = $('div.descriere-anunt').filter(containsTVAString);
+        const tvaFromTitle = $('h2').filter(containsTVAString);
+        const tvaFromDescription = this.getDescriptionCheerioElements().filter(containsTVAString);
 
         return tvaFromTitle.length > 0 || tvaFromDescription.length > 0;
     }
@@ -153,7 +151,7 @@ export class DataExtractorAnuntulRo extends DataExtractor {
 
     extractRoomsCountFromTitle() {
         const $ = load(this.html);
-        const title = $('div.titlu-anunt > h1').get()[0];
+        const title = $('h2').get()[0];
         const titleText = $(title).text().toLowerCase();
 
         if (
@@ -195,8 +193,12 @@ export class DataExtractorAnuntulRo extends DataExtractor {
 
     extractRoomsCountFromDescription() {
         const $ = load(this.html);
-        const description = $('div.descriere-anunt');
-        let descriptionText = description.text();
+        let descriptionText = '';
+
+        const descriptions = this.getDescriptionCheerioElements();
+        descriptions.each((index, element) => {
+            descriptionText = descriptionText + $(element).text() + '\n';
+        });
 
         if (
             descriptionText.indexOf('garsoniera') >= 0 ||
@@ -218,10 +220,11 @@ export class DataExtractorAnuntulRo extends DataExtractor {
 
     extractSurface() {
         const $ = load(this.html);
-        const surfaceElement = $('.label-listing2 .i-dib').filter(function () {
+        const surfaceElement = $('div.anunt-etichete > span.d-inline-block.me-2').filter(function () {
             const matches = $(this)
                 .text()
                 .toLowerCase()
+                .trim()
                 .match(/^suprafata/);
             return matches !== null;
         });
@@ -229,6 +232,7 @@ export class DataExtractorAnuntulRo extends DataExtractor {
         const matches = surfaceElement
             .text()
             .toLowerCase()
+            .trim()
             .match(/suprafata ([0-9]+)/);
 
         return Number(matches[1]);
@@ -236,19 +240,24 @@ export class DataExtractorAnuntulRo extends DataExtractor {
 
     extractZone() {
         const $ = load(this.html);
-        const zoneElements = $('#mini-statistica-zona > h3');
+        const listingSections = $('div.col-lg-9 > div');
+
+        const zoneElements = listingSections.filter((index, element) => {
+            const text = $(element).text();
+            return !!text.match(/Evolutia preturilor imobiliare in ([a-zA-Z0-9\-'". ]+)/i);
+        });
 
         if (zoneElements.length === 0) {
             return null;
         }
 
-        return zoneElements.text();
+        return zoneElements.text().match(/Evolutia preturilor imobiliare in ([a-zA-Z0-9\-'". ]+)/i)[1];
     }
 
     extractConstructionYear() {
         const $ = load(this.html);
-        const yearElements = $('.label-listing2 .i-dib').filter(function () {
-            const matches = $(this).text().toLowerCase().match(/^an/);
+        const yearElements = $('div.anunt-etichete > span.d-inline-block.me-2').filter(function () {
+            const matches = $(this).text().toLowerCase().trim().match(/^an/);
             return matches !== null;
         });
 
@@ -259,15 +268,16 @@ export class DataExtractorAnuntulRo extends DataExtractor {
         const matches = yearElements
             .text()
             .toLowerCase()
-            .match(/an ([0-9]{4})/);
+            .trim()
+            .match(/^an ([0-9]{4})/);
 
         return matches[1];
     }
 
     extractFloor() {
         const $ = load(this.html);
-        const floorElements = $('.label-listing2 .i-dib').filter(function () {
-            const matches = $(this).text().toLowerCase().match(/^etaj/);
+        const floorElements = $('div.anunt-etichete > span.d-inline-block.me-2').filter(function () {
+            const matches = $(this).text().toLowerCase().trim().match(/^etaj/);
             return matches !== null;
         });
 
@@ -278,7 +288,8 @@ export class DataExtractorAnuntulRo extends DataExtractor {
         const matches = floorElements
             .text()
             .toLowerCase()
-            .match(/etaj ([a-z0-9]+)/);
+            .trim()
+            .match(/^etaj ([a-z0-9]+)/);
 
         return matches[1];
     }
@@ -289,19 +300,22 @@ export class DataExtractorAnuntulRo extends DataExtractor {
         const containsCentralHeating = function () {
             const matches = $(this)
                 .text()
+                .trim()
                 .match(/centrala( proprie| termica)/i);
             return matches !== null;
         };
 
-        const centralHeatingFromUtilities = $('div.label-details').filter(containsCentralHeating);
-        const centralHeatingFromDescription = $('div.descriere-anunt').filter(containsCentralHeating);
+        const centralHeatingFromUtilities = $('div.anunt-etichete > span.d-inline-block.me-2').filter(
+            containsCentralHeating
+        );
+        const centralHeatingFromDescription = this.getDescriptionCheerioElements().filter(containsCentralHeating);
 
         return centralHeatingFromUtilities.length > 0 || centralHeatingFromDescription.length > 0;
     }
 
     async extractImageUrls(browserPage) {
         const $ = load(this.html);
-        const linkElements = $('a[data-gall]');
+        const linkElements = $('a[data-lightbox]');
 
         if (linkElements.length === 0) {
             return [];
@@ -318,5 +332,24 @@ export class DataExtractorAnuntulRo extends DataExtractor {
         });
 
         return imageUrls;
+    }
+
+    getDescriptionCheerioElements() {
+        const $ = load(this.html);
+        const isDescriptionTitle = {};
+        const listingSections = $('div.col-lg-9 > div');
+
+        listingSections.each((index, element) => {
+            const text = $(element).text();
+
+            if (index === 0) {
+                isDescriptionTitle[0] = false;
+                return;
+            }
+
+            isDescriptionTitle[index] = !isDescriptionTitle[index - 1] && !!text.match(/(descriere|detalii)/i);
+        });
+
+        return listingSections.filter((index) => (index === 0 ? false : isDescriptionTitle[index - 1]));
     }
 }

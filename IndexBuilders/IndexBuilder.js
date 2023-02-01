@@ -92,7 +92,7 @@ export class IndexBuilder {
             consoleLog(`[${this.source}] Fetching listing page...`);
             const listingPageHtml = await this.fetchListingPage(liveListing, browserPage);
 
-            this.dataExtractor.setDataSource(listingPageHtml);
+            this.dataExtractor.setDataSource(listingPageHtml, liveListing);
 
             const versionDetails = this.getVersionDetailsWithExtractor(liveListing);
 
