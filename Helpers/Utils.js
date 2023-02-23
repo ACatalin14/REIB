@@ -1,6 +1,14 @@
 import fs from 'fs';
 import delay from 'delay';
-import { RESTING_DELAY_MAX, RESTING_DELAY_MIN, SYNCHRONIZATION_TIME } from '../Constants.js';
+import {
+    RESTING_DELAY_MAX,
+    RESTING_DELAY_MIN,
+    SOURCE_ANUNTUL_RO,
+    SOURCE_IMOBILIARE_RO,
+    SOURCE_OLX_RO,
+    SOURCE_PUBLI24_RO,
+    SYNCHRONIZATION_TIME,
+} from '../Constants.js';
 
 export function getRandomItem(items) {
     const randomIndex = Math.floor(Math.random() * items.length);
@@ -25,6 +33,21 @@ export function useTestDb() {
 
 export function useContinuousSync() {
     return getBooleanValueFromEnvVariable(process.env.USE_CONTINUOUS_SYNC);
+}
+
+export function firstSyncSource() {
+    if (!process.env.FIRST_SYNC_SOURCE || !['1', '2', '3', '4'].includes(process.env.FIRST_SYNC_SOURCE)) {
+        return null;
+    }
+
+    const mapSourceNumberToSourceString = {
+        1: SOURCE_IMOBILIARE_RO,
+        2: SOURCE_OLX_RO,
+        3: SOURCE_PUBLI24_RO,
+        4: SOURCE_ANUNTUL_RO,
+    };
+
+    return mapSourceNumberToSourceString[process.env.FIRST_SYNC_SOURCE];
 }
 
 function getBooleanValueFromEnvVariable(envVariable) {

@@ -38,7 +38,7 @@ export class MainIndexSynchronizer {
         this.apartmentsCollection = null;
     }
 
-    async sync() {
+    async sync(firstSourceToSync) {
         this.dbClient = new DbClient();
 
         consoleLog('[main-synchronizer] Connecting to the database...');
@@ -46,10 +46,22 @@ export class MainIndexSynchronizer {
 
         this.apartmentsCollection = new DbCollection(DB_COLLECTION_APARTMENTS, this.dbClient);
 
-        await this.syncIndexImobiliareRo();
-        await this.syncIndexOlxRo();
-        await this.syncIndexPubli24Ro();
-        await this.syncIndexAnuntulRo();
+        switch (firstSourceToSync) {
+            case SOURCE_IMOBILIARE_RO:
+                await this.syncIndexImobiliareRo();
+            // Fallthrough
+            case SOURCE_OLX_RO:
+                await this.syncIndexOlxRo();
+            // Fallthrough
+            case SOURCE_PUBLI24_RO:
+                await this.syncIndexPubli24Ro();
+            // Fallthrough
+            case SOURCE_ANUNTUL_RO:
+                await this.syncIndexAnuntulRo();
+            // Fallthrough
+            default:
+            // Do nothing
+        }
 
         consoleLog('[main-synchronizer] Disconnecting from the database...');
         await this.dbClient.disconnect();

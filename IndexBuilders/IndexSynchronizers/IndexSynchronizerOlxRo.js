@@ -42,7 +42,7 @@ export class IndexSynchronizerOlxRo extends IndexSynchronizer {
         const strMaxPrice = maxPrice ? maxPrice : 'Infinity';
         const range = `${minPrice} - ${strMaxPrice}`;
         const liveListingsToSync = [];
-        const newMarketLiveListings = [];
+        const currentMarketLiveListings = [];
 
         consoleLog(`[${this.source}] Fetching live listings with price between ${range} euros.`);
 
@@ -73,9 +73,9 @@ export class IndexSynchronizerOlxRo extends IndexSynchronizer {
             return;
         }
 
-        await this.syncCurrentMarketListingsFromMarket(liveListingsToSync, newMarketLiveListings);
+        await this.syncCurrentMarketListingsFromMarket(liveListingsToSync, currentMarketLiveListings);
 
-        marketLiveListings.push(...newMarketLiveListings);
+        marketLiveListings.push(...currentMarketLiveListings);
     }
 
     async fetchVersionDataAndImageUrls(liveListing) {
