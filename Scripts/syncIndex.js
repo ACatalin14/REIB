@@ -11,7 +11,7 @@ import { config } from 'dotenv';
 import { MainIndexSynchronizer } from '../IndexBuilders/IndexSynchronizers/MainIndexSynchronizer.js';
 import { consoleLog, firstSyncSource, setSyncDateForToday, useContinuousSync } from '../Helpers/Utils.js';
 import delay from 'delay';
-import { SOURCE_IMOBILIARE_RO } from '../Constants';
+import { SOURCE_IMOBILIARE_RO } from '../Constants.js';
 
 config(); // Use Environment Variables
 
