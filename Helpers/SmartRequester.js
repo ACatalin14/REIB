@@ -180,7 +180,14 @@ export class SmartRequester {
             promises.push(this.getImagePromise(urls[i]));
         }
 
-        const results = await Promise.allSettled(promises);
+        const rejectAfterDelay = (ms) =>
+            new Promise((_, reject) => {
+                setTimeout(reject, ms, new Error('timeout'));
+            });
+
+        const results = await Promise.allSettled(
+            promises.map((promise) => Promise.race([promise, rejectAfterDelay(30000)]))
+        );
 
         return results.filter((result) => result.status === 'fulfilled').map((result) => result.value);
     }
