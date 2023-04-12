@@ -10,6 +10,7 @@ import { DbClient } from '../DbLayer/DbClient.js';
 import { consoleLog } from '../Helpers/Utils.js';
 import { DbCollection } from '../DbLayer/DbCollection.js';
 import { Int32 } from 'mongodb';
+import ObjectsToCsv from 'objects-to-csv';
 
 export class StatsMaker {
     constructor() {
@@ -22,23 +23,24 @@ export class StatsMaker {
     async makeStats() {
         this.dbClient = new DbClient();
 
-        consoleLog('[stats] Computing end of month statistics started.');
+        consoleLog('[stats] Computing statistics started.');
 
         consoleLog('[stats] Connecting to the database...');
         await this.dbClient.connect();
 
         this.statsCollection = new DbCollection(DB_COLLECTION_STATS, this.dbClient);
 
-        await this.makeListingsStats();
-        await this.makeApartmentsStats();
-        await this.makeSoldApartmentsStats();
+        const listingsStats = await this.makeListingsStats();
+        const apartmentsStats = await this.makeApartmentsStats();
+        const soldApartmentsStats = await this.makeSoldApartmentsStats();
+        const stats = [...listingsStats, ...apartmentsStats, ...soldApartmentsStats];
 
         consoleLog('[stats] Disconnecting from the database...');
         await this.dbClient.disconnect();
 
-        // TODO: Save to .csv file
+        await this.saveToCsvFile(stats);
 
-        consoleLog('[stats] Computing end of month statistics finished.');
+        consoleLog('[stats] Computing statistics finished.');
     }
 
     async makeListingsStats() {
@@ -52,6 +54,8 @@ export class StatsMaker {
             { roomsCount: 2 },
             { roomsCount: 3 },
             { roomsCount: 4 },
+            { hasNewApartment: true },
+            { hasNewApartment: false },
             { roomsCount: 1, hasNewApartment: true },
             { roomsCount: 1, hasNewApartment: false },
             { roomsCount: 2, hasNewApartment: true },
@@ -74,6 +78,8 @@ export class StatsMaker {
         }
 
         await this.statsCollection.insertMany(results);
+
+        return results;
     }
 
     async makeApartmentsStats() {
@@ -87,6 +93,8 @@ export class StatsMaker {
             { roomsCount: 2 },
             { roomsCount: 3 },
             { roomsCount: 4 },
+            { isNew: true },
+            { isNew: false },
             { roomsCount: 1, isNew: true },
             { roomsCount: 1, isNew: false },
             { roomsCount: 2, isNew: true },
@@ -109,6 +117,8 @@ export class StatsMaker {
         }
 
         await this.statsCollection.insertMany(results);
+
+        return results;
     }
 
     async makeSoldApartmentsStats() {
@@ -122,6 +132,8 @@ export class StatsMaker {
             { roomsCount: 2 },
             { roomsCount: 3 },
             { roomsCount: 4 },
+            { isNew: true },
+            { isNew: false },
             { roomsCount: 1, isNew: true },
             { roomsCount: 1, isNew: false },
             { roomsCount: 2, isNew: true },
@@ -144,6 +156,20 @@ export class StatsMaker {
         }
 
         await this.statsCollection.insertMany(results);
+
+        return results;
+    }
+
+    async saveToCsvFile(stats) {
+        stats = stats.map((stat) => ({
+            ...stat,
+            newApartment: stat.newApartment === true ? 1 : (stat.newApartment === false ? 0 : null),
+            startDate: stat.startDate.toLocaleDateString('ro-RO'),
+            endDate: stat.endDate.toLocaleDateString('ro-RO'),
+        }));
+
+        const csv = new ObjectsToCsv(stats);
+        await csv.toDisk(`./Statistics/${process.env.STATS_RESULTS_FILE_NAME}`, { append: true });
     }
 
     async getAggregationResultForListings(extraFilters) {

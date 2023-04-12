@@ -78,7 +78,7 @@ export class SimilarityDetector {
             return similarHashesPairs.length === 2;
         }
 
-        if (thresholdType === 'relative') {
+        if (thresholdType === SIMILARITY_THRESHOLD_TYPE_RELATIVE) {
             // For new apartments, lists are similar if more than half of the smaller list images
             // are found in the bigger one (relative threshold)
             return similarHashesPairs.length >= Math.ceil(smallerListLength / 2);

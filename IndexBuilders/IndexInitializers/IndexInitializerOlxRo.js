@@ -45,7 +45,16 @@ export class IndexInitializerOlxRo extends IndexInitializer {
         consoleLog(`[${this.source}] Initializing listings with price between ${range} euros.`);
 
         while (true) {
-            const listingsData = await this.fetchListingsDataFromOlxApi(minPrice, maxPrice, offset);
+            let listingsData;
+
+            try {
+                listingsData = await this.fetchListingsDataFromOlxApi(minPrice, maxPrice, offset);
+            } catch (error) {
+                consoleLog(`[${this.source}] Retrying in 30 seconds. Cannot fetch listings data between ${minPrice} - ${maxPrice} euros (offset: ${offset}) from OLX due to error:`);
+                consoleLog(error);
+                await delay(30000);
+                continue;
+            }
 
             if (listingsData.length === 0) {
                 break;
