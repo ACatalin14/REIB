@@ -30,6 +30,11 @@ export const INDEX_TYPE_LISTINGS = 'listings';
 export const INDEX_TYPE_APARTMENTS = 'apartments';
 export const INDEX_TYPE_SOLD_APARTMENTS = 'soldApartments';
 
+export const STATS_STEP_EXACT = 'exact';
+export const STATS_STEP_MONTH = 'month';
+export const STATS_STEP_WEEK = 'week';
+export const STATS_STEP_DAY = 'day';
+
 export const DB_REIB = 'reib';
 export const DB_REIB_TEST = 'reib-test';
 export const DB_COLLECTION_APARTMENTS = 'apartments';

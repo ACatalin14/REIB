@@ -40,6 +40,15 @@ export class DbCollection {
         );
     }
 
+    async count(filter = {}, options = {}) {
+        return await callUntilSuccess(
+            this.countMethod.bind(this),
+            [filter, options],
+            this.errorMessage,
+            RETRY_DB_OPERATION_DELAY
+        );
+    }
+
     async insertOne(record) {
         return await callUntilSuccess(
             this.insertOneMethod.bind(this),
@@ -106,6 +115,10 @@ export class DbCollection {
     async findMethod(filter, options) {
         const cursor = await this.getCollection().find(filter, options);
         return await cursor.toArray();
+    }
+
+    async countMethod(filter, options) {
+        return await this.getCollection().count(filter, options);
     }
 
     async insertOneMethod(record) {

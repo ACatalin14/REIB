@@ -68,7 +68,9 @@ async function checkWithDiffHash() {
 
     testSampleImages.forEach((image) => {
         const similarityWithOriginal = image.similarityWithOriginal;
-        console.log(`${similarityWithOriginal * 100}% Similarity between original.png - ${image.sample}`);
+        console.log(
+            `${Math.round(similarityWithOriginal * 10000) / 100}% Similarity between original.png - ${image.sample}`
+        );
     });
 }
 

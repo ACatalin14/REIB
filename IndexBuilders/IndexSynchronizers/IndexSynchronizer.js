@@ -119,7 +119,7 @@ export class IndexSynchronizer extends IndexBuilder {
                     await this.enableListingForResell(liveListing.id);
                     await this.updateMarketListing(liveListing);
                     marketLiveListings.push(liveListingDbProps);
-                    await this.liveListingsSubCollection.updateOne({ id: listingId }, { $set: liveListingDbProps });
+                    await this.liveListingsSubCollection.insertOne(liveListingDbProps);
                     consoleLog(`[${this.source}] Fetched and updated listing for resell in database. Waiting...`);
                     await delay(getRandomRestingDelay());
                     continue;
