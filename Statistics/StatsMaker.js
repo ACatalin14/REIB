@@ -191,7 +191,7 @@ export class StatsMaker {
         }
 
         const csv = new ObjectsToCsv(results);
-        await csv.toDisk(`./Statistics/${process.env.STATS_RESULTS_FILE_NAME}`, { append: true });
+        await csv.toDisk(`./Statistics/Results/${process.env.STATS_RESULTS_FILE_NAME}`, { append: true });
 
         consoleLog('[stats] Disconnecting from the database...');
         await this.dbClient.disconnect();
@@ -320,7 +320,7 @@ export class StatsMaker {
         }));
 
         const csv = new ObjectsToCsv(stats);
-        await csv.toDisk(`./Statistics/${process.env.STATS_RESULTS_FILE_NAME}`, { append: true });
+        await csv.toDisk(`./Statistics/Results/${process.env.STATS_RESULTS_FILE_NAME}`, { append: true });
     }
 
     async saveToDatabaseCollection(stats, handleDatabaseConnection) {

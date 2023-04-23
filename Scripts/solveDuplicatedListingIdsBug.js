@@ -19,12 +19,17 @@ import { DbClient } from '../DbLayer/DbClient.js';
 import { config } from 'dotenv';
 import { DbCollection } from '../DbLayer/DbCollection.js';
 import { DB_COLLECTION_APARTMENTS, DB_COLLECTION_LISTINGS } from '../Constants.js';
+import { consoleLog } from '../Helpers/Utils.js';
+import { ObjectId } from 'mongodb';
 
 config(); // Use Environment Variables
 
 async function main() {
     const dbClient = new DbClient();
     await dbClient.connect();
+
+    // 302 080 listings => 237 897 listings (after insert unified and delete duplicates)
+    // 44 844 unique ids@urls that are duplicated
 
     const listingsCollection = new DbCollection(DB_COLLECTION_LISTINGS, dbClient);
     const apartmentsCollection = new DbCollection(DB_COLLECTION_APARTMENTS, dbClient);
@@ -33,14 +38,21 @@ async function main() {
 
     const unifiedListings = await insertUnifiedUniqueListings(listingsCollection, duplicatedListings);
 
-    await deleteDuplicatedListings(listingsCollection, duplicatedListings);
+    const deletedListingsIds = await deleteDuplicatedListings(listingsCollection, duplicatedListings);
 
-    await updateApartmentLinks(apartmentsCollection, duplicatedListings, unifiedListings);
+    await updateApartmentLinks(apartmentsCollection, deletedListingsIds, unifiedListings);
+    // await updateApartmentLinks2(listingsCollection, apartmentsCollection);
+
+    await fixUnifiedListingsImages(listingsCollection);
 
     await dbClient.disconnect();
+
+    consoleLog('Done.');
 }
 
 async function fetchDuplicatedListings(listingsCollection) {
+    consoleLog('Fetching duplicated listings...');
+
     // Fetch listings with same ID and URL, in 2 minutes 8 secs for 301 092 listings
     let listings = await listingsCollection.find({}, {});
 
@@ -53,6 +65,8 @@ async function fetchDuplicatedListings(listingsCollection) {
 }
 
 async function insertUnifiedUniqueListings(listingsCollection, duplicatedListings) {
+    consoleLog('Computing and inserting unified listings...');
+
     const unifiedListings = [];
 
     for (let i = 0; i < duplicatedListings.length; i++) {
@@ -146,6 +160,8 @@ function computeBaseListingFieldsFromDuplicates(duplicatedListings) {
 }
 
 async function deleteDuplicatedListings(listingsCollection, duplicatedListings) {
+    consoleLog('Deleting old listing records for duplicates...');
+
     const idsToDelete = [];
 
     for (let i = 0; i < duplicatedListings.length; i++) {
@@ -153,26 +169,102 @@ async function deleteDuplicatedListings(listingsCollection, duplicatedListings) 
         idsToDelete.push(...ids);
     }
 
-    // await listingsCollection.deleteMany({ _id: { $in: idsToDelete } });
+    await listingsCollection.deleteMany({ _id: { $in: idsToDelete } });
 
     return idsToDelete;
 }
 
-async function updateApartmentLinks(apartmentsCollection, duplicatedListings, unifiedListings) {
-    // Delete old links
-    const idsToDelete = duplicatedListings
-        .map((listings) => listings.map((l) => l._id))
-        .reduce((accumulator, current) => accumulator.concat(current), []);
+async function updateApartmentLinks(apartmentsCollection, deletedListingsIds, unifiedListings) {
+    consoleLog('Deleting old apartment links...');
 
-    await apartmentsCollection.updateMany({}, { $pullAll: { listings: idsToDelete } });
+    // Delete old links
+    await apartmentsCollection.updateMany({}, { $pullAll: { listings: deletedListingsIds } });
 
     // Create new links
+    consoleLog('Creating new apartment links...');
+
     for (let i = 0; i < unifiedListings.length; i++) {
         await apartmentsCollection.updateOne(
             { _id: unifiedListings[i].apartment },
             { $push: { listings: unifiedListings[i]._id } }
         );
     }
+}
+
+async function updateApartmentLinks2(listingsCollection, apartmentsCollection) {
+    consoleLog('Updating impacted apartment links...');
+
+    consoleLog('Fetching all apartments...');
+    const apartments = await apartmentsCollection.find({}, { projection: { _id: 1, listings: 1 } });
+
+    consoleLog('Fetching all listings...');
+    const listings = await listingsCollection.find({}, { projection: { _id: 1 } });
+    const listingsIdsSet = new Set(listings.map((doc) => doc._id.toString()));
+
+    consoleLog('Fetching all unified listings...');
+    const unifiedListings = await listingsCollection.find(
+        {
+            _id: {
+                $gt: ObjectId.createFromTime(new Date('2023-04-19 21:45:00').getTime() / 1000),
+            },
+        },
+        {
+            projection: { _id: 1, apartment: 1 },
+        }
+    );
+
+    consoleLog('Building the hash map...');
+    const indexedUnifiedListings = {};
+
+    for (let i = 0; i < unifiedListings.length; i++) {
+        const apartmentId = unifiedListings[i].apartment.toString();
+
+        if (!indexedUnifiedListings[apartmentId]) {
+            indexedUnifiedListings[apartmentId] = [];
+        }
+
+        indexedUnifiedListings[apartmentId].push(unifiedListings[i]._id.toString());
+    }
+
+    consoleLog('Updating apartment links...');
+    for (let i = 0; i < apartments.length; i++) {
+        const idsToPull = [];
+        const idsToPush = indexedUnifiedListings[apartments[i]._id.toString()] ?? [];
+        const ids = apartments[i].listings.map((id) => id.toString());
+
+        for (let j = 0; j < apartments[i].listings.length; j++) {
+            const listingId = apartments[i].listings[j].toString();
+            if (!listingsIdsSet.has(listingId)) {
+                idsToPull.push(listingId);
+            }
+        }
+
+        const newIds = ids.filter((id) => !idsToPull.includes(id));
+        newIds.push(...idsToPush);
+
+        if (idsToPull.length > 0 || idsToPush.length > 0) {
+            await apartmentsCollection.updateOne(
+                { _id: apartments[i]._id },
+                { $set: { listings: newIds.map(ObjectId) } }
+            );
+        }
+    }
+}
+
+async function fixUnifiedListingsImages(listingsCollection) {
+    await listingsCollection.updateMany(
+        {
+            _id: {
+                $gt: ObjectId.createFromTime(new Date('2023-04-19 21:45:00').getTime() / 1000),
+                $lt: ObjectId.createFromTime(new Date('2023-04-20 00:15:00').getTime() / 1000),
+            },
+        },
+        {
+            $set: {
+                images: [],
+            },
+        }
+    );
 }
 
 export function indexListingsByIdAndUrl(listings) {
