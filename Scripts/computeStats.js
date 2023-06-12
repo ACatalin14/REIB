@@ -15,6 +15,7 @@
  *   "month" - make monthly stats for calendaristic months between START_DATE and END_DATE
  *   "week" - make weekly stats for calendaristic weeks between START_DATE and END_DATE
  *   "day" - make daily stats for all full days between  START_DATE and END_DATE
+ * STATS_EXCLUDE_TVA = "true"
  */
 
 import { config } from 'dotenv';

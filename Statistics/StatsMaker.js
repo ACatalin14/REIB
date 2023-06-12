@@ -13,7 +13,7 @@ import {
     SOURCE_PUBLI24_RO,
 } from '../Constants.js';
 import { DbClient } from '../DbLayer/DbClient.js';
-import { consoleLog, mapObjectsToValueOfKey } from '../Helpers/Utils.js';
+import { consoleLog, excludeTvaFromStats, mapObjectsToValueOfKey } from '../Helpers/Utils.js';
 import { DbCollection } from '../DbLayer/DbCollection.js';
 import { Int32 } from 'mongodb';
 import ObjectsToCsv from 'objects-to-csv';
@@ -391,8 +391,18 @@ export class StatsMaker {
             { $unset: 'versions' },
             {
                 $set: {
-                    price: '$version.price',
-                    pricePerSurface: { $round: [{ $divide: ['$version.price', '$version.surface'] }, 2] },
+                    price: excludeTvaFromStats() ? '$version.basePrice' : '$version.price',
+                    pricePerSurface: {
+                        $round: [
+                            {
+                                $divide: [
+                                    excludeTvaFromStats() ? '$version.basePrice' : '$version.price',
+                                    '$version.surface',
+                                ],
+                            },
+                            2,
+                        ],
+                    },
                 },
             },
             {
@@ -445,6 +455,7 @@ export class StatsMaker {
                     isNew: 1,
                     'listings.versions.publishDate': 1,
                     'listings.versions.closeDate': 1,
+                    'listings.versions.basePrice': 1,
                     'listings.versions.price': 1,
                     'listings.versions.surface': 1,
                 },
@@ -539,7 +550,7 @@ export class StatsMaker {
                             $map: {
                                 input: '$versions',
                                 as: 'version',
-                                in: '$$version.price',
+                                in: excludeTvaFromStats() ? '$$version.basePrice' : '$$version.price',
                             },
                         },
                     },
@@ -610,6 +621,7 @@ export class StatsMaker {
                     isNew: 1,
                     'listings.versions.publishDate': 1,
                     'listings.versions.closeDate': 1,
+                    'listings.versions.basePrice': 1,
                     'listings.versions.price': 1,
                     'listings.versions.surface': 1,
                     'listings.versions.sold': 1,
@@ -717,7 +729,7 @@ export class StatsMaker {
                             $map: {
                                 input: '$versions',
                                 as: 'version',
-                                in: '$$version.price',
+                                in: excludeTvaFromStats() ? '$$version.basePrice' : '$$version.price',
                             },
                         },
                     },

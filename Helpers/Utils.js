@@ -35,6 +35,10 @@ export function useContinuousSync() {
     return getBooleanValueFromEnvVariable(process.env.USE_CONTINUOUS_SYNC);
 }
 
+export function excludeTvaFromStats() {
+    return getBooleanValueFromEnvVariable(process.env.STATS_EXCLUDE_TVA);
+}
+
 export function firstSyncSource() {
     if (!process.env.FIRST_SYNC_SOURCE || !['1', '2', '3', '4'].includes(process.env.FIRST_SYNC_SOURCE)) {
         return null;
